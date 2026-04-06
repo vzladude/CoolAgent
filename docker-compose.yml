@@ -1,0 +1,90 @@
+services:
+  # ─── PostgreSQL 16 con pgvector ────────────────────────────────
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: coolagent-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-coolagent}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-coolagent_dev}
+      POSTGRES_DB: ${POSTGRES_DB:-coolagent}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infra/docker/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-coolagent}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Redis 7 ───────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: coolagent-redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── MinIO (S3-compatible storage) ─────────────────────────────
+  minio:
+    image: minio/minio
+    container_name: coolagent-minio
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    command: server /data --console-address ":9001"
+    ports:
+      - "${MINIO_API_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── FastAPI Backend ───────────────────────────────────────────
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: coolagent-api
+    restart: unless-stopped
+    environment:
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - AI_PROVIDER_NAME=${AI_PROVIDER_NAME:-claude}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - CLAUDE_CHAT_MODEL=${CLAUDE_CHAT_MODEL:-claude-haiku-4-5-20251001}
+      - CLAUDE_VISION_MODEL=${CLAUDE_VISION_MODEL:-claude-haiku-4-5-20251001}
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-coolagent}:${POSTGRES_PASSWORD:-coolagent_dev}@postgres:5432/${POSTGRES_DB:-coolagent}
+      - REDIS_URL=redis://redis:6379/0
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_ACCESS_KEY=${MINIO_ROOT_USER:-minioadmin}
+      - MINIO_SECRET_KEY=${MINIO_ROOT_PASSWORD:-minioadmin}
+      - MINIO_BUCKET=${MINIO_BUCKET:-coolagent}
+    ports:
+      - "${API_PORT:-8000}:8000"
+    volumes:
+      - ./backend:/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
