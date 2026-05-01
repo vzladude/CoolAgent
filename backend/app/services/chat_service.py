@@ -100,6 +100,7 @@ class ChatService:
         self.db.add(user_message)
 
         rag_context = await self.rag.build_context(data.content, limit=3)
+        knowledge_fingerprint = await self.rag.knowledge_fingerprint()
         system_prompt = build_rag_prompt(rag_context)
 
         provider_name = self.settings.ai_provider
@@ -111,6 +112,7 @@ class ChatService:
             user_content=data.content,
             rag_context=rag_context,
             history_fingerprint=self._history_fingerprint(history),
+            knowledge_fingerprint=knowledge_fingerprint,
         )
 
         cached_response = await self.cache.get_chat_response(cache_key)

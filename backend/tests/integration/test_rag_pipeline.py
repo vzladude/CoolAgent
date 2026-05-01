@@ -51,6 +51,8 @@ def fake_embeddings(monkeypatch):
 @pytest.mark.asyncio
 async def test_rag_ingest_search_filters_and_delete(db_session, fake_embeddings):
     service = rag_module.RAGService(db_session)
+    empty_fingerprint = await service.knowledge_fingerprint()
+
     document = await service.ingest_text(
         content="Carrier 38AKS codigo E7: falla del sensor del evaporador.",
         title="Manual Carrier 38AKS",
@@ -61,6 +63,8 @@ async def test_rag_ingest_search_filters_and_delete(db_session, fake_embeddings)
         category="hvac",
     )
     await db_session.commit()
+    ingested_fingerprint = await service.knowledge_fingerprint()
+    assert ingested_fingerprint != empty_fingerprint
 
     results = await service.search(
         "Que significa E7 en Carrier 38AKS?",
@@ -83,6 +87,8 @@ async def test_rag_ingest_search_filters_and_delete(db_session, fake_embeddings)
     deleted = await service.delete_document(document.id)
     await db_session.commit()
     assert deleted is True
+    deleted_fingerprint = await service.knowledge_fingerprint()
+    assert deleted_fingerprint != ingested_fingerprint
 
     chunk_count = await db_session.scalar(select(func.count()).select_from(KnowledgeChunk))
     assert chunk_count == 0

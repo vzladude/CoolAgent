@@ -38,6 +38,9 @@ class FakeRAGService:
         assert limit == 3
         return "Manual Carrier: E7 indica sensor del evaporador."
 
+    async def knowledge_fingerprint(self):
+        return "knowledge-fingerprint"
+
 
 class FakeCache:
     def __init__(self, cached_response: CachedChatResponse | None = None):
@@ -131,6 +134,7 @@ async def test_send_message_injects_rag_context_and_uses_mocked_ai(monkeypatch):
     assert FakeRAGService.calls == 1
     assert cache.get_calls == ["cache-key"]
     assert cache.key_kwargs["history_fingerprint"]
+    assert cache.key_kwargs["knowledge_fingerprint"] == "knowledge-fingerprint"
     assert cache.set_calls[0][1].content == "Respuesta usando manual"
     assert usage.events[0]["cache_status"] == "miss"
     assert usage.events[0]["tokens_input"] == 10

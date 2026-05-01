@@ -44,6 +44,7 @@ class ResponseCache:
         user_content: str,
         rag_context: str | None,
         history_fingerprint: str | None = None,
+        knowledge_fingerprint: str | None = None,
     ) -> str:
         context_hash = hashlib.sha256((rag_context or "").encode("utf-8")).hexdigest()
         payload = {
@@ -54,6 +55,7 @@ class ResponseCache:
             "user_content": " ".join(user_content.split()),
             "rag_context_hash": context_hash,
             "history_fingerprint": history_fingerprint or "",
+            "knowledge_fingerprint": knowledge_fingerprint or "",
         }
         raw = json.dumps(payload, sort_keys=True, separators=(",", ":"))
         digest = hashlib.sha256(raw.encode("utf-8")).hexdigest()

@@ -4,6 +4,8 @@ Pipeline completo: ingesta de documentos → chunking → embeddings → búsque
 Soporta filtros opcionales por fabricante, modelo de equipo y categoría.
 """
 
+import hashlib
+import json
 import uuid
 from datetime import datetime, timezone
 from typing import BinaryIO
@@ -247,6 +249,32 @@ class RAGService:
             context_parts.append(f"---\n{r['content']}\n({source_info})\n")
 
         return "\n".join(context_parts)
+
+    async def knowledge_fingerprint(self) -> str:
+        """Return a stable fingerprint for the current knowledge base state."""
+        result = await self.db.execute(
+            text("""
+                SELECT
+                    (SELECT COUNT(*) FROM knowledge_documents) AS document_count,
+                    (SELECT COALESCE(SUM(chunk_count), 0)
+                       FROM knowledge_documents) AS declared_chunk_count,
+                    (SELECT COALESCE(MAX(created_at)::text, '')
+                       FROM knowledge_documents) AS latest_document_at,
+                    (SELECT COUNT(*) FROM knowledge_chunks) AS chunk_count,
+                    (SELECT COALESCE(MAX(created_at)::text, '')
+                       FROM knowledge_chunks) AS latest_chunk_at
+            """)
+        )
+        row = result.one()
+        payload = {
+            "document_count": row.document_count,
+            "declared_chunk_count": row.declared_chunk_count,
+            "latest_document_at": row.latest_document_at,
+            "chunk_count": row.chunk_count,
+            "latest_chunk_at": row.latest_chunk_at,
+        }
+        raw = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+        return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
     # ─── ADMINISTRACIÓN ──────────────────────────────────
 

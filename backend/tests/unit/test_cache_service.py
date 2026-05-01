@@ -29,7 +29,7 @@ class FailingRedis:
         raise RuntimeError("redis unavailable")
 
 
-def test_chat_cache_key_changes_with_policy_and_context():
+def test_chat_cache_key_changes_with_policy_context_history_and_knowledge():
     cache = ResponseCache(redis_client=FakeRedis())
 
     base_key = cache.build_chat_key(
@@ -61,10 +61,19 @@ def test_chat_cache_key_changes_with_policy_and_context():
         rag_context="Manual Carrier",
         history_fingerprint="different-history",
     )
+    changed_knowledge = cache.build_chat_key(
+        provider="claude",
+        model="haiku",
+        prompt_policy_version="v1",
+        user_content="Que significa E7?",
+        rag_context="Manual Carrier",
+        knowledge_fingerprint="different-knowledge",
+    )
 
     assert base_key != changed_policy
     assert base_key != changed_context
     assert base_key != changed_history
+    assert base_key != changed_knowledge
 
 
 @pytest.mark.asyncio

@@ -82,13 +82,14 @@ Fase B esta iniciada. Ya existe una primera capa segura: tracking de uso/tokens 
 2. `UsageService` registra llamadas reales al provider, cache hits y bloqueos de dominio.
 3. Endpoint `GET /api/v1/usage/summary` resume eventos, tokens y cache.
 4. `ResponseCache` guarda respuestas exactas en Redis con TTL.
-5. La llave de cache incluye provider, modelo, `PROMPT_POLICY_VERSION`, pregunta normalizada, huella del historial y hash del contexto RAG.
+5. La llave de cache incluye provider, modelo, `PROMPT_POLICY_VERSION`, pregunta normalizada, huella del historial, hash del contexto RAG y huella global de la knowledge base.
 6. Si Redis falla, el chat sigue funcionando y llama al provider normalmente.
+7. `RAGService.knowledge_fingerprint()` cambia cuando se ingieren o borran documentos/chunks, por lo que respuestas antiguas dejan de coincidir.
 
 ### Pendiente
 
 1. Cache semantico con criterios estrictos de similitud.
-2. Politica de invalidacion mas fina cuando se reingieran o borren documentos.
+2. Invalidacion explicita de Redis si mas adelante se quiere limpiar memoria inmediatamente, no solo cambiar llaves.
 3. Precios configurables por proveedor/modelo para estimar costos con precision.
 4. Cuotas/autenticacion antes de uso real multiusuario.
 
