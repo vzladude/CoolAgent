@@ -11,7 +11,7 @@ from sqlalchemy import select
 
 from app.ai.providers import get_ai_provider
 from app.ai.providers.base import ChatMessage
-from app.ai.prompts import SYSTEM_PROMPT_CHAT, build_rag_prompt
+from app.ai.prompts import build_rag_prompt
 from app.models.conversation import Conversation, Message
 from app.schemas.chat import (
     ChatMessageRequest,
@@ -19,6 +19,7 @@ from app.schemas.chat import (
     ConversationCreate,
     ConversationResponse,
 )
+from app.services.domain_guard import DomainGuard
 from app.services.rag_service import RAGService
 
 
@@ -29,6 +30,7 @@ class ChatService:
         self.db = db
         self.provider = get_ai_provider()
         self.rag = RAGService(db)
+        self.domain_guard = DomainGuard()
 
     async def create_conversation(
         self, data: ConversationCreate
@@ -64,6 +66,21 @@ class ChatService:
             created_at=datetime.now(timezone.utc),
         )
         self.db.add(user_message)
+
+        domain_result = self.domain_guard.evaluate(data.content)
+        if not domain_result.is_allowed:
+            assistant_message = Message(
+                id=uuid4(),
+                conversation_id=conversation_id,
+                role="assistant",
+                content=domain_result.response or "",
+                tokens_used=0,
+                model_used=f"domain-guard:{domain_result.policy_version}",
+                created_at=datetime.now(timezone.utc),
+            )
+            self.db.add(assistant_message)
+            await self.db.flush()
+            return ChatMessageResponse.model_validate(assistant_message)
 
         # Obtener historial de la conversación
         history = await self._get_conversation_history(conversation_id)

@@ -44,6 +44,28 @@ El pipeline RAG ya esta implementado y probado localmente con Claude:
 
 ---
 
+## Fase B0 - Guardrails y prompt de refrigeracion general
+
+**Prioridad:** ALTA  
+**Impacto:** Evita cachear respuestas que no respeten el dominio del asistente.
+
+### Resultado esperado
+
+1. System prompt actualizado para refrigeracion general, no solo HVAC/R industrial.
+2. `DomainGuard` bloquea consultas claramente fuera del dominio sin llamar a Claude ni RAG.
+3. Temas auxiliares se permiten cuando estan conectados al trabajo tecnico: electricidad aplicada, seguridad, herramientas, normativa, mediciones y diagnostico.
+4. Se define `PROMPT_POLICY_VERSION` para que el cache futuro no reutilice respuestas de politicas antiguas.
+5. Tests unitarios cubren consultas permitidas, rechazadas y prompt injection.
+
+### Archivos principales
+
+- `backend/app/ai/prompts.py`
+- `backend/app/services/domain_guard.py`
+- `backend/app/services/chat_service.py`
+- `backend/tests/unit/test_domain_guard.py`
+
+---
+
 ## Fase B - Cache con Redis
 
 **Prioridad:** MEDIA  
