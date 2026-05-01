@@ -5,7 +5,7 @@ Modelos de Códigos de Error — Base de datos de errores HVAC/R.
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import String, Text, Integer, DateTime, ForeignKey, JSON
+from sqlalchemy import DateTime, ForeignKey, JSON, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -50,10 +50,16 @@ class ErrorCode(Base):
     severity: Mapped[str | None] = mapped_column(
         String(20), nullable=True
     )  # low | medium | high | critical
-    possible_causes: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    possible_causes: Mapped[list[str] | None] = mapped_column(JSON, nullable=True)
     suggested_fix: Mapped[str | None] = mapped_column(Text, nullable=True)
+    source: Mapped[str | None] = mapped_column(String(500), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
     )
 
     # Relación

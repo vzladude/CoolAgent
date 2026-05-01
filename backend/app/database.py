@@ -326,3 +326,25 @@ async def ensure_development_schema(conn) -> None:
         CREATE INDEX IF NOT EXISTS ix_usage_events_technical_case_id
         ON usage_events (technical_case_id)
     """))
+    await conn.execute(text("""
+        ALTER TABLE error_codes
+            ADD COLUMN IF NOT EXISTS source VARCHAR(500),
+            ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE
+                NOT NULL DEFAULT now()
+    """))
+    await conn.execute(text("""
+        CREATE INDEX IF NOT EXISTS ix_error_codes_manufacturer
+        ON error_codes (manufacturer)
+    """))
+    await conn.execute(text("""
+        CREATE INDEX IF NOT EXISTS ix_error_codes_model
+        ON error_codes (model)
+    """))
+    await conn.execute(text("""
+        CREATE INDEX IF NOT EXISTS ix_error_codes_manufacturer_model
+        ON error_codes (manufacturer, model)
+    """))
+    await conn.execute(text("""
+        CREATE INDEX IF NOT EXISTS ix_error_codes_updated_at
+        ON error_codes (updated_at)
+    """))

@@ -1,6 +1,6 @@
 # CoolAgent - Backend AI Roadmap
 
-**Estado actual:** Backend base funcional con Claude Haiku API, PostgreSQL/pgvector, Redis, MinIO, RAG probado end-to-end, guardrails de dominio, usage/cache exacto, streaming WebSocket y casos tecnicos con contexto robusto.
+**Estado actual:** Backend base funcional con Claude Haiku API, PostgreSQL/pgvector, Redis, MinIO, RAG probado end-to-end, guardrails de dominio, usage/cache exacto, streaming WebSocket, casos tecnicos con contexto robusto y base inicial de codigos de error.
 **Fecha de corte:** 1 de mayo de 2026
 **Uso de esta carpeta:** `plans/` contiene planes temporales de la tarea activa. La fuente central de verdad vive en `documentation/CoolAgent_Documentacion_Maestra.docx`.
 **Nota:** No se planea pasar a staging/produccion pronto. Alembic se agrega ahora para que ese futuro paso sea mas simple y seguro.
@@ -204,21 +204,30 @@ El dominio oficial del chat pasa de `Conversation` a `TechnicalCase`. Un caso te
 
 ---
 
-## Fase D - Base de datos de codigos de error
+## Fase D - Base de datos de codigos de error - BASE IMPLEMENTADA
 
 **Prioridad:** MEDIA  
 **Impacto:** Feature util para modo offline y diagnostico rapido.
 
 ### Estado actual
 
-Los modelos, schemas y router base existen, pero los endpoints todavia devuelven listas vacias.
+La base tecnica ya esta implementada. Los endpoints consultan la base real en vez de devolver listas vacias.
 
-### Tareas
+### Implementado
 
-1. Crear seed inicial con fabricantes prioritarios: Carrier, Trane, Daikin, LG, Samsung, Copeland, Danfoss y Bitzer.
-2. Implementar busqueda por codigo, fabricante y modelo.
-3. Agregar endpoint de fabricantes con conteos reales.
-4. Preparar estructura para sincronizacion offline futura.
+1. Migracion Alembic `20260501_0006` agrega `source`, `updated_at` e indices por fabricante/modelo.
+2. `GET /api/v1/error-codes/` busca por codigo, fabricante y modelo con paginacion `limit`/`offset`.
+3. `GET /api/v1/error-codes/manufacturers` lista fabricantes con conteos reales de modelos y codigos.
+4. `backend/scripts/seed_error_codes.py` crea fabricantes prioritarios de forma idempotente: Carrier, Trane, Daikin, LG, Samsung, Copeland, Danfoss y Bitzer.
+5. El seed no inventa codigos. El arreglo `TRUSTED_ERROR_CODES` queda listo para agregar codigos solo cuando provengan de manuales, boletines o fuentes trazables.
+6. Validacion local: 8 fabricantes cargados, 0 codigos inventados, RAG intacto.
+7. Tests Docker: `54 passed`.
+
+### Pendiente de contenido
+
+1. Cargar codigos reales por fabricante/modelo desde manuales confiables.
+2. Relacionar codigos con documentos RAG cuando exista fuente/documento asociado.
+3. Definir formato de sync offline cuando el frontend movil exista.
 
 ### Archivos esperados
 

@@ -151,3 +151,36 @@ async def test_alembic_renames_conversations_to_technical_cases(db_session):
         """)
     )
     assert status_check.scalar_one() == "ck_technical_cases_status"
+
+
+@pytest.mark.asyncio
+async def test_alembic_prepares_error_code_search_schema(db_session):
+    source_column = await db_session.execute(
+        text("""
+            SELECT column_name
+              FROM information_schema.columns
+             WHERE table_name = 'error_codes'
+               AND column_name = 'source'
+        """)
+    )
+    assert source_column.scalar_one() == "source"
+
+    updated_at_column = await db_session.execute(
+        text("""
+            SELECT column_name
+              FROM information_schema.columns
+             WHERE table_name = 'error_codes'
+               AND column_name = 'updated_at'
+        """)
+    )
+    assert updated_at_column.scalar_one() == "updated_at"
+
+    manufacturer_model_index = await db_session.execute(
+        text("""
+            SELECT indexname
+              FROM pg_indexes
+             WHERE tablename = 'error_codes'
+               AND indexname = 'ix_error_codes_manufacturer_model'
+        """)
+    )
+    assert manufacturer_model_index.scalar_one() == "ix_error_codes_manufacturer_model"
