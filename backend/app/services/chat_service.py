@@ -1,5 +1,6 @@
 """
 Servicio de Chat — Lógica de negocio para conversaciones con el AI.
+Integrado con RAG para respuestas basadas en documentación técnica.
 """
 
 from datetime import datetime, timezone
@@ -10,7 +11,7 @@ from sqlalchemy import select
 
 from app.ai.providers import get_ai_provider
 from app.ai.providers.base import ChatMessage
-from app.ai.prompts import SYSTEM_PROMPT_CHAT
+from app.ai.prompts import SYSTEM_PROMPT_CHAT, build_rag_prompt
 from app.models.conversation import Conversation, Message
 from app.schemas.chat import (
     ChatMessageRequest,
@@ -18,6 +19,7 @@ from app.schemas.chat import (
     ConversationCreate,
     ConversationResponse,
 )
+from app.services.rag_service import RAGService
 
 
 class ChatService:
@@ -26,6 +28,7 @@ class ChatService:
     def __init__(self, db: AsyncSession):
         self.db = db
         self.provider = get_ai_provider()
+        self.rag = RAGService(db)
 
     async def create_conversation(
         self, data: ConversationCreate
@@ -46,7 +49,7 @@ class ChatService:
         conversation_id: UUID,
         data: ChatMessageRequest,
     ) -> ChatMessageResponse:
-        """Enviar mensaje del usuario y obtener respuesta del AI."""
+        """Enviar mensaje del usuario y obtener respuesta del AI con RAG."""
         # Verificar que la conversación existe
         conversation = await self.db.get(Conversation, conversation_id)
         if not conversation:
@@ -65,9 +68,15 @@ class ChatService:
         # Obtener historial de la conversación
         history = await self._get_conversation_history(conversation_id)
 
+        # RAG: buscar contexto relevante en la knowledge base
+        rag_context = await self.rag.build_context(data.content, limit=3)
+
+        # Construir system prompt (con o sin RAG)
+        system_prompt = build_rag_prompt(rag_context)
+
         # Construir mensajes para el AI
         ai_messages = [
-            ChatMessage(role="system", content=SYSTEM_PROMPT_CHAT),
+            ChatMessage(role="system", content=system_prompt),
             *[
                 ChatMessage(role=msg.role, content=msg.content)
                 for msg in history

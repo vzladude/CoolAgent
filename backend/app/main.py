@@ -6,10 +6,11 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
 
 from app.config import get_settings
-from app.database import engine, Base
-from app.routers import chat, diagnosis, error_codes, health
+from app.database import engine, Base, ensure_development_schema
+from app.routers import chat, diagnosis, error_codes, health, knowledge
 
 
 @asynccontextmanager
@@ -20,7 +21,10 @@ async def lifespan(app: FastAPI):
     # Crear tablas en la base de datos (en dev; en prod usar Alembic)
     if settings.environment == "development":
         async with engine.begin() as conn:
+            await conn.execute(text('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"'))
+            await conn.execute(text('CREATE EXTENSION IF NOT EXISTS "vector"'))
             await conn.run_sync(Base.metadata.create_all)
+            await ensure_development_schema(conn)
 
     print(f"🚀 CoolAgent API iniciada [{settings.environment}]")
     print(f"🤖 AI Provider: {settings.ai_provider}")
@@ -69,6 +73,11 @@ def create_app() -> FastAPI:
         error_codes.router,
         prefix=f"{settings.api_v1_prefix}/error-codes",
         tags=["Error Codes"],
+    )
+    app.include_router(
+        knowledge.router,
+        prefix=f"{settings.api_v1_prefix}/knowledge",
+        tags=["Knowledge Base"],
     )
 
     return app

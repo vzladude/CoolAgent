@@ -49,10 +49,10 @@ class EmbeddingService:
                     id,
                     content,
                     chunk_metadata,
-                    1 - (embedding <=> :embedding::vector) as similarity
+                    1 - (embedding <=> CAST(:embedding AS vector)) as similarity
                 FROM {table}
-                WHERE 1 - (embedding <=> :embedding::vector) > :threshold
-                ORDER BY embedding <=> :embedding::vector
+                WHERE 1 - (embedding <=> CAST(:embedding AS vector)) > :threshold
+                ORDER BY embedding <=> CAST(:embedding AS vector)
                 LIMIT :limit
             """),
             {

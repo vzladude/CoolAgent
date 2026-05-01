@@ -56,3 +56,5 @@ models/
 .coverage
 htmlcov/
 *.tmp
+documentation/_render_temp/
+documentation/_render_check_master/

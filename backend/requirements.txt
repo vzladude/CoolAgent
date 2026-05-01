@@ -29,9 +29,10 @@ ollama==0.5.1
 # AWS Bedrock (producción)
 boto3==1.38.12
 
-# ─── Procesamiento de texto para RAG ────────────────
-tiktoken==0.9.0
+# ─── RAG: Embeddings + Procesamiento de texto ───────
+sentence-transformers==4.1.0
 langchain-text-splitters==0.3.8
+pypdf==5.6.0
 
 # ─── Auth ────────────────────────────────────────────
 python-jose[cryptography]==3.4.0
