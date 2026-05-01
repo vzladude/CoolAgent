@@ -31,6 +31,13 @@ class Settings(BaseSettings):
 
     # ─── Redis ───────────────────────────────────────────
     redis_url: str = "redis://localhost:6379/0"
+    cache_namespace: str = "coolagent:v1"
+    chat_cache_enabled: bool = True
+    chat_cache_ttl_seconds: int = 86400
+
+    # Usage / cost tracking. Keep prices unset until we choose a provider plan.
+    usage_input_cost_per_million_usd: float | None = None
+    usage_output_cost_per_million_usd: float | None = None
 
     # ─── MinIO / S3 ─────────────────────────────────────
     minio_endpoint: str = "localhost:9000"

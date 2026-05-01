@@ -49,7 +49,7 @@ docker-compose.override.yml
 *.bin
 *.gguf
 *.safetensors
-models/
+/models/
 
 # ─── Archivos de test/temporales ─────────────────────
 .pytest_cache/

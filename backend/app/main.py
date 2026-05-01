@@ -10,7 +10,7 @@ from sqlalchemy import text
 
 from app.config import get_settings
 from app.database import engine, Base, ensure_development_schema
-from app.routers import chat, diagnosis, error_codes, health, knowledge
+from app.routers import chat, diagnosis, error_codes, health, knowledge, usage
 
 
 @asynccontextmanager
@@ -78,6 +78,11 @@ def create_app() -> FastAPI:
         knowledge.router,
         prefix=f"{settings.api_v1_prefix}/knowledge",
         tags=["Knowledge Base"],
+    )
+    app.include_router(
+        usage.router,
+        prefix=f"{settings.api_v1_prefix}/usage",
+        tags=["Usage"],
     )
 
     return app

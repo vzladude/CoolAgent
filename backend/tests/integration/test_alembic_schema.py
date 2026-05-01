@@ -35,3 +35,26 @@ async def test_alembic_creates_pgvector_schema(db_session):
         """)
     )
     assert hnsw_index.scalar_one() == "ix_knowledge_chunks_embedding_hnsw"
+
+
+@pytest.mark.asyncio
+async def test_alembic_creates_usage_tracking_schema(db_session):
+    usage_table = await db_session.execute(
+        text("""
+            SELECT tablename
+              FROM pg_tables
+             WHERE schemaname = 'public'
+               AND tablename = 'usage_events'
+        """)
+    )
+    assert usage_table.scalar_one() == "usage_events"
+
+    cache_index = await db_session.execute(
+        text("""
+            SELECT indexname
+              FROM pg_indexes
+             WHERE tablename = 'usage_events'
+               AND indexname = 'ix_usage_events_cache_status'
+        """)
+    )
+    assert cache_index.scalar_one() == "ix_usage_events_cache_status"

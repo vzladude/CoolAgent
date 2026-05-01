@@ -1,13 +1,13 @@
 # CoolAgent - Backend AI Roadmap
 
-**Estado actual:** Backend base funcional con Claude Haiku API, PostgreSQL/pgvector, Redis, MinIO y RAG probado end-to-end.
-**Fecha de corte:** 30 de abril de 2026
+**Estado actual:** Backend base funcional con Claude Haiku API, PostgreSQL/pgvector, Redis, MinIO, RAG probado end-to-end, guardrails de dominio y primera capa de usage/cache.
+**Fecha de corte:** 1 de mayo de 2026
 **Uso de esta carpeta:** `plans/` contiene planes temporales de la tarea activa. La fuente central de verdad vive en `documentation/CoolAgent_Documentacion_Maestra.docx`.
 **Nota:** No se planea pasar a staging/produccion pronto. Alembic se agrega ahora para que ese futuro paso sea mas simple y seguro.
 
 ---
 
-## Fase A - RAG Pipeline - EN CIERRE
+## Fase A - RAG Pipeline - CERRADA
 
 **Prioridad:** ALTA  
 **Impacto:** Diferencia a CoolAgent de un chat generico.
@@ -36,11 +36,12 @@ El pipeline RAG ya esta implementado y probado localmente con Claude:
 - `backend/alembic/versions/20260430_0001_initial_rag_baseline.py`
 - `backend/tests/`
 
-### Pendiente para cerrar formalmente el milestone
+### Cierre formal
 
-1. Ejecutar y mantener en verde la suite de tests unitarios e integracion.
-2. Revisar cambios sin trackear relacionados al RAG.
-3. Hacer commit del backend RAG como hito estable.
+1. Migraciones Alembic agregadas y aplicadas localmente sin borrar datos RAG.
+2. Tests unitarios e integracion corriendo en verde con provider AI mockeado.
+3. Glosario RAG disponible para revisar documentos ingeridos.
+4. Hito estable confirmado en git.
 
 ---
 
@@ -71,17 +72,32 @@ El pipeline RAG ya esta implementado y probado localmente con Claude:
 **Prioridad:** MEDIA  
 **Impacto:** Reducir costo y latencia.
 
-### Tareas
+### Estado actual
 
-1. Cache de respuestas identicas o semanticamente similares con TTL.
-2. Tracking de tokens por respuesta, modelo y conversacion.
-3. Endpoint de uso/costos para monitoreo.
-4. Politica clara de invalidacion cuando cambie la knowledge base.
+Fase B esta iniciada. Ya existe una primera capa segura: tracking de uso/tokens y cache exacto con Redis. No se implemento cache semantico todavia para evitar devolver respuestas viejas cuando cambie el contexto tecnico.
+
+### Implementado
+
+1. Tabla `usage_events` con migracion Alembic `20260501_0002`.
+2. `UsageService` registra llamadas reales al provider, cache hits y bloqueos de dominio.
+3. Endpoint `GET /api/v1/usage/summary` resume eventos, tokens y cache.
+4. `ResponseCache` guarda respuestas exactas en Redis con TTL.
+5. La llave de cache incluye provider, modelo, `PROMPT_POLICY_VERSION`, pregunta normalizada, huella del historial y hash del contexto RAG.
+6. Si Redis falla, el chat sigue funcionando y llama al provider normalmente.
+
+### Pendiente
+
+1. Cache semantico con criterios estrictos de similitud.
+2. Politica de invalidacion mas fina cuando se reingieran o borren documentos.
+3. Precios configurables por proveedor/modelo para estimar costos con precision.
+4. Cuotas/autenticacion antes de uso real multiusuario.
 
 ### Archivos esperados
 
 - `backend/app/services/cache_service.py`
 - `backend/app/routers/usage.py`
+- `backend/app/services/usage_service.py`
+- `backend/app/models/usage.py`
 
 ---
 

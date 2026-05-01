@@ -18,7 +18,15 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from app.database import Base
-from app.models import Conversation, ErrorCode, KnowledgeChunk, KnowledgeDocument, Manufacturer, Message  # noqa: F401
+from app.models import (  # noqa: F401
+    Conversation,
+    ErrorCode,
+    KnowledgeChunk,
+    KnowledgeDocument,
+    Manufacturer,
+    Message,
+    UsageEvent,
+)
 
 config = context.config
 
