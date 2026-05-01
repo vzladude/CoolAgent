@@ -93,7 +93,20 @@ Fase B esta iniciada. Ya existe una primera capa segura: tracking de uso/tokens 
 
 1. Cache semantico con criterios estrictos de similitud.
 2. Invalidacion explicita de Redis si mas adelante se quiere limpiar memoria inmediatamente, no solo cambiar llaves.
-3. Cuotas/autenticacion antes de uso real multiusuario.
+3. Rate limiting, cuotas y proteccion de creditos antes de uso real multiusuario. Este punto queda documentado como pendiente, pero se pospone porque debe disenarse junto con usuarios, planes, costo por usuario y monetizacion.
+
+### Decision sobre rate limiting
+
+No se implementa rate limiting en este momento. Aunque seria util como cinturon de seguridad de costos, conviene esperar hasta definir autenticacion, usuarios, planes comerciales y como se calculara el costo por usuario. Implementarlo ahora probablemente obligaria a rehacerlo cuando se disene la monetizacion.
+
+Queda pendiente para una fase futura:
+
+1. Limites por usuario, no solo limites globales.
+2. Limites separados para chat, vision, ingesta RAG y busqueda.
+3. Contadores por ventana de tiempo usando Redis.
+4. Politica de respuesta `429 Too Many Requests`.
+5. Relacion con planes pagos, pruebas gratis, creditos internos o cuotas mensuales.
+6. Reportes de costo por usuario/conversacion/modelo para tomar decisiones de precio.
 
 ### Archivos esperados
 
