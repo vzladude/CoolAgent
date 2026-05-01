@@ -13,6 +13,7 @@ from app.ai.providers.base import (
     AIProvider,
     ChatMessage,
     ChatResponse,
+    ChatStreamEvent,
     EmbeddingResponse,
 )
 from app.config import get_settings
@@ -66,7 +67,7 @@ class OllamaProvider(AIProvider):
         messages: list[ChatMessage],
         temperature: float = 0.7,
         max_tokens: int = 2048,
-    ) -> AsyncIterator[str]:
+    ) -> AsyncIterator[ChatStreamEvent]:
         """Chat con streaming usando Ollama."""
         ollama_messages = [
             {"role": msg.role, "content": msg.content}
@@ -84,8 +85,17 @@ class OllamaProvider(AIProvider):
         )
 
         async for chunk in stream:
-            if chunk["message"]["content"]:
-                yield chunk["message"]["content"]
+            content = chunk["message"]["content"]
+            if content:
+                yield ChatStreamEvent(type="delta", content=content)
+            if chunk.get("done"):
+                yield ChatStreamEvent(
+                    type="done",
+                    model=self.chat_model,
+                    tokens_input=chunk.get("prompt_eval_count", 0),
+                    tokens_output=chunk.get("eval_count", 0),
+                    finish_reason=chunk.get("done_reason"),
+                )
 
     async def vision(
         self,

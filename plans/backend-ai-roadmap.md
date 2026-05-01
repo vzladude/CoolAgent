@@ -117,21 +117,33 @@ Queda pendiente para una fase futura:
 
 ---
 
-## Fase C - WebSocket Streaming
+## Fase C - WebSocket Streaming - IMPLEMENTADA
 
 **Prioridad:** MEDIA  
 **Impacto:** Mejora UX del chat.
 
-### Tareas
+### Resultado
 
-1. Implementar `WebSocket /api/v1/chat/stream`.
-2. Conectar con `chat_stream()` del provider Claude.
-3. Persistir mensajes al finalizar stream.
-4. Manejar errores, reconexion y cancelacion.
+El backend ya tiene streaming por WebSocket para chat:
+
+1. Endpoint `WebSocket /api/v1/chat/conversations/{conversation_id}/messages/stream`.
+2. El cliente envia `{ "content": "..." }` al abrir el socket.
+3. El backend envia eventos JSON:
+   - `delta`: fragmentos de texto mientras Claude responde.
+   - `done`: metadata final del mensaje guardado, modelo, tokens y estado de cache.
+   - `error`: payload invalido o conversacion no encontrada.
+4. El flujo conserva el mismo orden seguro: `DomainGuard -> RAG -> cache exacto -> provider stream -> persistencia -> usage`.
+5. Si hay cache hit o bloqueo de dominio, responde por el mismo canal sin llamar a Claude.
+6. Al terminar el stream, guarda el mensaje completo del asistente, actualiza cache y registra usage/costos.
+7. `ClaudeProvider.chat_stream()` ahora captura metadata final de tokens cuando Anthropic la envia.
 
 ### Archivos esperados
 
-- `backend/app/routers/ws_chat.py`
+- `backend/app/routers/chat.py`
+- `backend/app/services/chat_service.py`
+- `backend/app/ai/providers/base.py`
+- `backend/app/ai/providers/claude_provider.py`
+- `backend/tests/unit/test_chat_router_stream.py`
 
 ---
 

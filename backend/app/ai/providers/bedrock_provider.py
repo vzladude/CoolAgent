@@ -12,6 +12,7 @@ from app.ai.providers.base import (
     AIProvider,
     ChatMessage,
     ChatResponse,
+    ChatStreamEvent,
     EmbeddingResponse,
 )
 from app.config import get_settings
@@ -87,7 +88,7 @@ class BedrockProvider(AIProvider):
         messages: list[ChatMessage],
         temperature: float = 0.7,
         max_tokens: int = 2048,
-    ) -> AsyncIterator[str]:
+    ) -> AsyncIterator[ChatStreamEvent]:
         """Chat con streaming usando Bedrock."""
         # TODO: Implementar con invoke_model_with_response_stream
         raise NotImplementedError("Bedrock streaming será implementado en Fase 4")

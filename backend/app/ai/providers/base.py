@@ -27,6 +27,17 @@ class ChatResponse:
 
 
 @dataclass
+class ChatStreamEvent:
+    """Evento de streaming de chat."""
+    type: str  # "delta" | "done"
+    content: str = ""
+    model: str | None = None
+    tokens_input: int = 0
+    tokens_output: int = 0
+    finish_reason: str | None = None
+
+
+@dataclass
 class EmbeddingResponse:
     """Respuesta de embeddings."""
     embedding: list[float]
@@ -56,7 +67,7 @@ class AIProvider(ABC):
         messages: list[ChatMessage],
         temperature: float = 0.7,
         max_tokens: int = 2048,
-    ) -> AsyncIterator[str]:
+    ) -> AsyncIterator[ChatStreamEvent]:
         """Generar respuesta de chat con streaming."""
         ...
 

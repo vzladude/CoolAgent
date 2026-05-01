@@ -14,6 +14,7 @@ from app.ai.providers.base import (
     AIProvider,
     ChatMessage,
     ChatResponse,
+    ChatStreamEvent,
     EmbeddingResponse,
 )
 from app.config import get_settings
@@ -95,10 +96,14 @@ class ClaudeProvider(AIProvider):
         messages: list[ChatMessage],
         temperature: float = 0.7,
         max_tokens: int = 1024,
-    ) -> AsyncIterator[str]:
+    ) -> AsyncIterator[ChatStreamEvent]:
         """Chat con streaming usando Claude API."""
         system_prompt = None
         claude_messages = []
+        model = self.chat_model
+        tokens_input = 0
+        tokens_output = 0
+        finish_reason = None
 
         for msg in messages:
             if msg.role == "system":
@@ -131,8 +136,31 @@ class ClaudeProvider(AIProvider):
                 async for line in response.aiter_lines():
                     if line.startswith("data: "):
                         data = json.loads(line[6:])
-                        if data["type"] == "content_block_delta":
-                            yield data["delta"].get("text", "")
+                        if data["type"] == "message_start":
+                            message = data.get("message", {})
+                            usage = message.get("usage", {})
+                            model = message.get("model", model)
+                            tokens_input = usage.get("input_tokens", 0)
+                        elif data["type"] == "content_block_delta":
+                            text = data["delta"].get("text", "")
+                            if text:
+                                yield ChatStreamEvent(type="delta", content=text)
+                        elif data["type"] == "message_delta":
+                            delta = data.get("delta", {})
+                            usage = data.get("usage", {})
+                            finish_reason = delta.get("stop_reason")
+                            tokens_output = usage.get(
+                                "output_tokens",
+                                tokens_output,
+                            )
+                        elif data["type"] == "message_stop":
+                            yield ChatStreamEvent(
+                                type="done",
+                                model=model,
+                                tokens_input=tokens_input,
+                                tokens_output=tokens_output,
+                                finish_reason=finish_reason,
+                            )
 
     async def vision(
         self,
