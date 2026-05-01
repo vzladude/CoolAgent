@@ -27,17 +27,20 @@ class UsageService:
     async def record_chat_event(
         self,
         *,
-        conversation_id: UUID | None,
         message_id: UUID | None,
         provider: str | None,
         model: str | None,
         prompt_policy_version: str | None,
         cache_status: str,
+        technical_case_id: UUID | None = None,
+        conversation_id: UUID | None = None,
+        event_type: str = "chat",
         tokens_input: int = 0,
         tokens_output: int = 0,
         cache_saved_tokens_input: int = 0,
         cache_saved_tokens_output: int = 0,
     ) -> UsageEvent:
+        resolved_case_id = technical_case_id or conversation_id
         estimated_cost = self.estimate_cost(
             provider=provider,
             model=model,
@@ -51,9 +54,9 @@ class UsageService:
             tokens_output=cache_saved_tokens_output,
         )
         event = UsageEvent(
-            conversation_id=conversation_id,
+            technical_case_id=resolved_case_id,
             message_id=message_id,
-            event_type="chat",
+            event_type=event_type,
             provider=provider,
             model=model,
             prompt_policy_version=prompt_policy_version,
@@ -75,13 +78,14 @@ class UsageService:
 
     async def get_summary(
         self,
+        technical_case_id: UUID | None = None,
         conversation_id: UUID | None = None,
         date_from: datetime | None = None,
         date_to: datetime | None = None,
         model: str | None = None,
     ) -> UsageSummaryResponse:
         filters = self._build_filters(
-            conversation_id=conversation_id,
+            technical_case_id=technical_case_id or conversation_id,
             date_from=date_from,
             date_to=date_to,
             model=model,
@@ -150,7 +154,8 @@ class UsageService:
                 estimated_savings,
                 pricing_configured,
             ),
-            conversation_id=conversation_id,
+            technical_case_id=technical_case_id or conversation_id,
+            conversation_id=technical_case_id or conversation_id,
             date_from=date_from,
             date_to=date_to,
             model=model,
@@ -185,14 +190,14 @@ class UsageService:
     def _build_filters(
         self,
         *,
-        conversation_id: UUID | None,
+        technical_case_id: UUID | None,
         date_from: datetime | None,
         date_to: datetime | None,
         model: str | None,
     ) -> list:
         filters = []
-        if conversation_id is not None:
-            filters.append(UsageEvent.conversation_id == conversation_id)
+        if technical_case_id is not None:
+            filters.append(UsageEvent.technical_case_id == technical_case_id)
         if date_from is not None:
             filters.append(UsageEvent.created_at >= date_from)
         if date_to is not None:

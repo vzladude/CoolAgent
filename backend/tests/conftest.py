@@ -96,7 +96,7 @@ async def db_session(migrated_test_database_url):
                 knowledge_chunks,
                 knowledge_documents,
                 messages,
-                conversations,
+                technical_cases,
                 error_codes,
                 manufacturers
             RESTART IDENTITY CASCADE

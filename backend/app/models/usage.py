@@ -23,9 +23,9 @@ class UsageEvent(Base):
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
-    conversation_id: Mapped[uuid.UUID | None] = mapped_column(
+    technical_case_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("conversations.id", ondelete="SET NULL"),
+        ForeignKey("technical_cases.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
     )
@@ -59,3 +59,12 @@ class UsageEvent(Base):
         default=lambda: datetime.now(timezone.utc),
         index=True,
     )
+
+    @property
+    def conversation_id(self) -> uuid.UUID | None:
+        """Legacy alias for usage filters created before TechnicalCase."""
+        return self.technical_case_id
+
+    @conversation_id.setter
+    def conversation_id(self, value: uuid.UUID | None) -> None:
+        self.technical_case_id = value

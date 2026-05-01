@@ -17,6 +17,7 @@ router = APIRouter()
 
 @router.get("/summary", response_model=UsageSummaryResponse)
 async def get_usage_summary(
+    technical_case_id: UUID | None = Query(None),
     conversation_id: UUID | None = Query(None),
     date_from: datetime | None = Query(None),
     date_to: datetime | None = Query(None),
@@ -26,6 +27,7 @@ async def get_usage_summary(
     """Return token and cache activity summary."""
     service = UsageService(db)
     return await service.get_summary(
+        technical_case_id=technical_case_id,
         conversation_id=conversation_id,
         date_from=date_from,
         date_to=date_to,

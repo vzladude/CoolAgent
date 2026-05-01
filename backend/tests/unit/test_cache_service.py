@@ -69,11 +69,29 @@ def test_chat_cache_key_changes_with_policy_context_history_and_knowledge():
         rag_context="Manual Carrier",
         knowledge_fingerprint="different-knowledge",
     )
+    changed_case = cache.build_chat_key(
+        provider="claude",
+        model="haiku",
+        prompt_policy_version="v1",
+        technical_case_id="case-2",
+        user_content="Que significa E7?",
+        rag_context="Manual Carrier",
+    )
+    changed_case_context = cache.build_chat_key(
+        provider="claude",
+        model="haiku",
+        prompt_policy_version="v1",
+        user_content="Que significa E7?",
+        rag_context="Manual Carrier",
+        context_fingerprint="different-summary",
+    )
 
     assert base_key != changed_policy
     assert base_key != changed_context
     assert base_key != changed_history
     assert base_key != changed_knowledge
+    assert base_key != changed_case
+    assert base_key != changed_case_context
 
 
 @pytest.mark.asyncio

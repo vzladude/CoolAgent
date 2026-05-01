@@ -13,14 +13,15 @@ class FakeChatService:
     def __init__(self, _db):
         pass
 
-    async def stream_message(self, conversation_id, data):
+    async def stream_case_message(self, case_id, data):
         yield {
             "type": "delta",
             "content": f"stream:{data.content}",
         }
         yield {
             "type": "done",
-            "conversation_id": str(conversation_id),
+            "technical_case_id": str(case_id),
+            "conversation_id": str(case_id),
             "message_id": str(uuid4()),
             "model_used": "fake-claude",
             "tokens_used": 3,
@@ -43,11 +44,11 @@ def build_app(monkeypatch):
 
 def test_websocket_stream_endpoint_sends_delta_and_done(monkeypatch):
     app = build_app(monkeypatch)
-    conversation_id = uuid4()
+    case_id = uuid4()
 
     with TestClient(app) as client:
         with client.websocket_connect(
-            f"/chat/conversations/{conversation_id}/messages/stream"
+            f"/chat/cases/{case_id}/messages/stream"
         ) as websocket:
             websocket.send_json({"content": "Que significa E7?"})
 
@@ -59,5 +60,6 @@ def test_websocket_stream_endpoint_sends_delta_and_done(monkeypatch):
         "content": "stream:Que significa E7?",
     }
     assert done["type"] == "done"
-    assert done["conversation_id"] == str(conversation_id)
+    assert done["technical_case_id"] == str(case_id)
+    assert done["conversation_id"] == str(case_id)
     assert done["cache_status"] == "miss"

@@ -48,6 +48,15 @@ INSTRUCCIONES ADICIONALES CON DOCUMENTACIÓN:
   e indícalo al técnico.
 """
 
+SYSTEM_PROMPT_CASE_SUMMARY = """
+RESUMEN TECNICO DEL CASO:
+Este resumen conserva el contexto importante de mensajes anteriores del caso \
+tecnico. Usalo para mantener continuidad, pero no lo trates como mas confiable \
+que la documentacion tecnica recuperada por RAG.
+
+{summary}
+"""
+
 SYSTEM_PROMPT_VISION = """Eres CoolAgent Vision, un sistema experto en diagnóstico visual de \
 equipos de refrigeración y climatización (HVAC/R).
 
@@ -76,3 +85,13 @@ def build_rag_prompt(rag_context: str | None) -> str:
             context=rag_context
         )
     return SYSTEM_PROMPT_CHAT
+
+
+def build_case_prompt(case_summary: str | None, rag_context: str | None) -> str:
+    """Construir el system prompt final para un caso tecnico."""
+    prompt = SYSTEM_PROMPT_CHAT
+    if case_summary:
+        prompt += SYSTEM_PROMPT_CASE_SUMMARY.format(summary=case_summary)
+    if rag_context:
+        prompt += SYSTEM_PROMPT_RAG_CONTEXT.format(context=rag_context)
+    return prompt

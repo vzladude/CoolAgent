@@ -78,3 +78,76 @@ async def test_alembic_creates_usage_tracking_schema(db_session):
         """)
     )
     assert model_index.scalar_one() == "ix_usage_events_model"
+
+    technical_case_column = await db_session.execute(
+        text("""
+            SELECT column_name
+              FROM information_schema.columns
+             WHERE table_name = 'usage_events'
+               AND column_name = 'technical_case_id'
+        """)
+    )
+    assert technical_case_column.scalar_one() == "technical_case_id"
+
+
+@pytest.mark.asyncio
+async def test_alembic_renames_conversations_to_technical_cases(db_session):
+    technical_cases = await db_session.execute(
+        text("""
+            SELECT tablename
+              FROM pg_tables
+             WHERE schemaname = 'public'
+               AND tablename = 'technical_cases'
+        """)
+    )
+    assert technical_cases.scalar_one() == "technical_cases"
+
+    old_conversations = await db_session.execute(
+        text("""
+            SELECT tablename
+              FROM pg_tables
+             WHERE schemaname = 'public'
+               AND tablename = 'conversations'
+        """)
+    )
+    assert old_conversations.scalar_one_or_none() is None
+
+    message_case_column = await db_session.execute(
+        text("""
+            SELECT column_name
+              FROM information_schema.columns
+             WHERE table_name = 'messages'
+               AND column_name = 'technical_case_id'
+        """)
+    )
+    assert message_case_column.scalar_one() == "technical_case_id"
+
+    summary_column = await db_session.execute(
+        text("""
+            SELECT column_name
+             FROM information_schema.columns
+             WHERE table_name = 'technical_cases'
+               AND column_name = 'context_summary'
+        """)
+    )
+    assert summary_column.scalar_one() == "context_summary"
+
+    message_fk = await db_session.execute(
+        text("""
+            SELECT confrelid::regclass::text
+              FROM pg_constraint
+             WHERE conrelid = 'messages'::regclass
+               AND conname = 'fk_messages_technical_case_id_technical_cases'
+        """)
+    )
+    assert message_fk.scalar_one() == "technical_cases"
+
+    status_check = await db_session.execute(
+        text("""
+            SELECT conname
+              FROM pg_constraint
+             WHERE conrelid = 'technical_cases'::regclass
+               AND conname = 'ck_technical_cases_status'
+        """)
+    )
+    assert status_check.scalar_one() == "ck_technical_cases_status"

@@ -23,6 +23,7 @@ class UsageSummaryResponse(BaseModel):
     cache_saved_tokens_output: int
     cache_saved_tokens_total: int
     estimated_cache_savings_usd: float | None = None
+    technical_case_id: UUID | None = None
     conversation_id: UUID | None = None
     date_from: datetime | None = None
     date_to: datetime | None = None

@@ -6,7 +6,7 @@ from uuid import uuid4
 import pytest
 
 from app.ai.providers.base import ChatResponse, ChatStreamEvent
-from app.models.conversation import Conversation
+from app.models.technical_case import TechnicalCase
 from app.schemas.chat import ChatMessageRequest
 from app.services import chat_service as chat_module
 from app.services.cache_service import CachedChatResponse
@@ -99,14 +99,14 @@ class FakeDb:
 
 
 def build_conversation():
-    conversation_id = uuid4()
-    conversation = Conversation(
-        id=conversation_id,
+    technical_case_id = uuid4()
+    technical_case = TechnicalCase(
+        id=technical_case_id,
         title="Prueba",
         created_at=datetime.now(timezone.utc),
         updated_at=datetime.now(timezone.utc),
     )
-    return conversation_id, conversation
+    return technical_case_id, technical_case
 
 
 def patch_dependencies(monkeypatch, provider, cache, usage):
@@ -129,7 +129,7 @@ async def test_send_message_injects_rag_context_and_uses_mocked_ai(monkeypatch):
     async def fake_history(_conversation_id):
         return []
 
-    monkeypatch.setattr(service, "_get_conversation_history", fake_history)
+    monkeypatch.setattr(service, "_get_case_history", fake_history)
 
     response = await service.send_message(
         conversation_id,
@@ -172,7 +172,7 @@ async def test_send_message_uses_cache_hit_without_ai_call(monkeypatch):
     async def fake_history(_conversation_id):
         return []
 
-    monkeypatch.setattr(service, "_get_conversation_history", fake_history)
+    monkeypatch.setattr(service, "_get_case_history", fake_history)
 
     response = await service.send_message(
         conversation_id,
@@ -203,7 +203,7 @@ async def test_send_message_blocks_out_of_domain_without_rag_ai_or_cache(monkeyp
     async def fake_history(_conversation_id):
         raise AssertionError("history should not be loaded for blocked messages")
 
-    monkeypatch.setattr(service, "_get_conversation_history", fake_history)
+    monkeypatch.setattr(service, "_get_case_history", fake_history)
 
     response = await service.send_message(
         conversation_id,
@@ -232,7 +232,7 @@ async def test_stream_message_streams_provider_deltas_and_persists(monkeypatch):
     async def fake_history(_conversation_id):
         return []
 
-    monkeypatch.setattr(service, "_get_conversation_history", fake_history)
+    monkeypatch.setattr(service, "_get_case_history", fake_history)
 
     events = [
         event
@@ -274,7 +274,7 @@ async def test_stream_message_cache_hit_streams_cached_content_without_ai(monkey
     async def fake_history(_conversation_id):
         return []
 
-    monkeypatch.setattr(service, "_get_conversation_history", fake_history)
+    monkeypatch.setattr(service, "_get_case_history", fake_history)
 
     events = [
         event
@@ -307,7 +307,7 @@ async def test_stream_message_blocks_out_of_domain_without_rag_ai_or_cache(monke
     async def fake_history(_conversation_id):
         raise AssertionError("history should not be loaded for blocked messages")
 
-    monkeypatch.setattr(service, "_get_conversation_history", fake_history)
+    monkeypatch.setattr(service, "_get_case_history", fake_history)
 
     events = [
         event
