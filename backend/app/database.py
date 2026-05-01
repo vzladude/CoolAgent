@@ -116,3 +116,15 @@ async def ensure_development_schema(conn) -> None:
         CREATE INDEX IF NOT EXISTS ix_knowledge_chunks_category
         ON knowledge_chunks (category)
     """))
+    await conn.execute(text("""
+        ALTER TABLE usage_events
+            ADD COLUMN IF NOT EXISTS estimated_cost_usd NUMERIC(12, 8),
+            ADD COLUMN IF NOT EXISTS cache_saved_tokens_input INTEGER NOT NULL DEFAULT 0,
+            ADD COLUMN IF NOT EXISTS cache_saved_tokens_output INTEGER NOT NULL DEFAULT 0,
+            ADD COLUMN IF NOT EXISTS cache_saved_tokens_total INTEGER NOT NULL DEFAULT 0,
+            ADD COLUMN IF NOT EXISTS cache_saved_cost_usd NUMERIC(12, 8)
+    """))
+    await conn.execute(text("""
+        CREATE INDEX IF NOT EXISTS ix_usage_events_model
+        ON usage_events (model)
+    """))

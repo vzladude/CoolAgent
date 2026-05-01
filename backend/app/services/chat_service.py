@@ -134,6 +134,8 @@ class ChatService:
                 model=cached_response.model,
                 prompt_policy_version=PROMPT_POLICY_VERSION,
                 cache_status="hit",
+                cache_saved_tokens_input=cached_response.tokens_input,
+                cache_saved_tokens_output=cached_response.tokens_output,
             )
             await self.db.flush()
             return ChatMessageResponse.model_validate(assistant_message)

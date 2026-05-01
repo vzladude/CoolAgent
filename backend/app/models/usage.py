@@ -6,8 +6,9 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime, timezone
+from decimal import Decimal
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String
+from sqlalchemy import DateTime, ForeignKey, Integer, Numeric, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -44,6 +45,15 @@ class UsageEvent(Base):
     tokens_input: Mapped[int] = mapped_column(Integer, default=0)
     tokens_output: Mapped[int] = mapped_column(Integer, default=0)
     tokens_total: Mapped[int] = mapped_column(Integer, default=0)
+    estimated_cost_usd: Mapped[Decimal | None] = mapped_column(
+        Numeric(12, 8), nullable=True
+    )
+    cache_saved_tokens_input: Mapped[int] = mapped_column(Integer, default=0)
+    cache_saved_tokens_output: Mapped[int] = mapped_column(Integer, default=0)
+    cache_saved_tokens_total: Mapped[int] = mapped_column(Integer, default=0)
+    cache_saved_cost_usd: Mapped[Decimal | None] = mapped_column(
+        Numeric(12, 8), nullable=True
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),

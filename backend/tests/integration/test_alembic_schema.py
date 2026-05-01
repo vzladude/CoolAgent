@@ -58,3 +58,23 @@ async def test_alembic_creates_usage_tracking_schema(db_session):
         """)
     )
     assert cache_index.scalar_one() == "ix_usage_events_cache_status"
+
+    cost_column = await db_session.execute(
+        text("""
+            SELECT column_name
+              FROM information_schema.columns
+             WHERE table_name = 'usage_events'
+               AND column_name = 'estimated_cost_usd'
+        """)
+    )
+    assert cost_column.scalar_one() == "estimated_cost_usd"
+
+    model_index = await db_session.execute(
+        text("""
+            SELECT indexname
+              FROM pg_indexes
+             WHERE tablename = 'usage_events'
+               AND indexname = 'ix_usage_events_model'
+        """)
+    )
+    assert model_index.scalar_one() == "ix_usage_events_model"

@@ -85,13 +85,15 @@ Fase B esta iniciada. Ya existe una primera capa segura: tracking de uso/tokens 
 5. La llave de cache incluye provider, modelo, `PROMPT_POLICY_VERSION`, pregunta normalizada, huella del historial, hash del contexto RAG y huella global de la knowledge base.
 6. Si Redis falla, el chat sigue funcionando y llama al provider normalmente.
 7. `RAGService.knowledge_fingerprint()` cambia cuando se ingieren o borran documentos/chunks, por lo que respuestas antiguas dejan de coincidir.
+8. Migracion Alembic `20260501_0003` agrega costo estimado por evento y ahorro estimado por cache.
+9. `/api/v1/usage/summary` acepta filtros por conversacion, fechas y modelo.
+10. Los precios son configurables por `USAGE_PRICING_JSON` o por variables simples de input/output por 1M tokens. No se fijan precios reales en codigo.
 
 ### Pendiente
 
 1. Cache semantico con criterios estrictos de similitud.
 2. Invalidacion explicita de Redis si mas adelante se quiere limpiar memoria inmediatamente, no solo cambiar llaves.
-3. Precios configurables por proveedor/modelo para estimar costos con precision.
-4. Cuotas/autenticacion antes de uso real multiusuario.
+3. Cuotas/autenticacion antes de uso real multiusuario.
 
 ### Archivos esperados
 

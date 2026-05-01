@@ -2,9 +2,10 @@
 Usage monitoring endpoints.
 """
 
+from datetime import datetime
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
@@ -16,9 +17,17 @@ router = APIRouter()
 
 @router.get("/summary", response_model=UsageSummaryResponse)
 async def get_usage_summary(
-    conversation_id: UUID | None = None,
+    conversation_id: UUID | None = Query(None),
+    date_from: datetime | None = Query(None),
+    date_to: datetime | None = Query(None),
+    model: str | None = Query(None),
     db: AsyncSession = Depends(get_db),
 ):
     """Return token and cache activity summary."""
     service = UsageService(db)
-    return await service.get_summary(conversation_id=conversation_id)
+    return await service.get_summary(
+        conversation_id=conversation_id,
+        date_from=date_from,
+        date_to=date_to,
+        model=model,
+    )

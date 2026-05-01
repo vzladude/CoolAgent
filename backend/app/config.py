@@ -36,6 +36,7 @@ class Settings(BaseSettings):
     chat_cache_ttl_seconds: int = 86400
 
     # Usage / cost tracking. Keep prices unset until we choose a provider plan.
+    usage_pricing_json: str = ""
     usage_input_cost_per_million_usd: float | None = None
     usage_output_cost_per_million_usd: float | None = None
 

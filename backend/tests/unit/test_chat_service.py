@@ -175,6 +175,8 @@ async def test_send_message_uses_cache_hit_without_ai_call(monkeypatch):
     assert cache.get_calls == ["cache-key"]
     assert cache.set_calls == []
     assert usage.events[0]["cache_status"] == "hit"
+    assert usage.events[0]["cache_saved_tokens_input"] == 10
+    assert usage.events[0]["cache_saved_tokens_output"] == 5
 
 
 @pytest.mark.asyncio
