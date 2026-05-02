@@ -6,6 +6,8 @@ Soporta filtros opcionales por fabricante, modelo de equipo y categoría.
 
 import hashlib
 import json
+import re
+import unicodedata
 import uuid
 from datetime import datetime, timezone
 from typing import BinaryIO
@@ -17,6 +19,22 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.ai.providers.local_embedding_provider import get_embedding_provider
 from app.models.knowledge import KnowledgeDocument, KnowledgeChunk
+
+
+_STOPWORDS = {
+    "algo",
+    "como",
+    "con",
+    "cuando",
+    "del",
+    "donde",
+    "este",
+    "esta",
+    "para",
+    "pero",
+    "que",
+    "una",
+}
 
 
 class RAGService:
@@ -31,6 +49,28 @@ class RAGService:
             length_function=len,
             separators=["\n\n", "\n", ". ", " ", ""],
         )
+
+    @staticmethod
+    def _normalize_text(value: str) -> str:
+        normalized = unicodedata.normalize("NFKD", value.lower())
+        return "".join(char for char in normalized if not unicodedata.combining(char))
+
+    @classmethod
+    def _query_keywords(cls, query: str) -> list[str]:
+        normalized = cls._normalize_text(query)
+        words = re.findall(r"[a-z0-9]+", normalized)
+        keywords: list[str] = []
+        for word in words:
+            if len(word) < 4 or word in _STOPWORDS:
+                continue
+            if word not in keywords:
+                keywords.append(word)
+        return keywords[:12]
+
+    @classmethod
+    def _keyword_score(cls, content: str, keywords: list[str]) -> int:
+        normalized = cls._normalize_text(content)
+        return sum(1 for keyword in keywords if keyword in normalized)
 
     # ─── INGESTA ─────────────────────────────────────────
 
@@ -155,6 +195,8 @@ class RAGService:
         """
         query_response = await self.embedding_provider.embed(query)
         query_embedding = query_response.embedding
+        keywords = self._query_keywords(query)
+        candidate_limit = max(limit * 8, 24)
 
         # Construir query con filtros opcionales
         vector_expr = "CAST(:embedding AS vector)"
@@ -164,24 +206,29 @@ class RAGService:
         params = {
             "embedding": str(query_embedding),
             "threshold": similarity_threshold,
-            "limit": limit,
+            "limit": candidate_limit,
         }
+        filter_clauses: list[str] = []
+        filter_params: dict[str, str] = {}
 
         if manufacturer:
-            where_clauses.append("kc.manufacturer ILIKE :manufacturer")
-            params["manufacturer"] = f"%{manufacturer}%"
+            filter_clauses.append("kc.manufacturer ILIKE :manufacturer")
+            filter_params["manufacturer"] = f"%{manufacturer}%"
 
         if equipment_model:
-            where_clauses.append("kc.equipment_model ILIKE :equipment_model")
-            params["equipment_model"] = f"%{equipment_model}%"
+            filter_clauses.append("kc.equipment_model ILIKE :equipment_model")
+            filter_params["equipment_model"] = f"%{equipment_model}%"
 
         if category:
-            where_clauses.append("kc.category = :category")
-            params["category"] = category
+            filter_clauses.append("kc.category = :category")
+            filter_params["category"] = category
+
+        where_clauses.extend(filter_clauses)
+        params.update(filter_params)
 
         where_sql = " AND ".join(where_clauses)
 
-        result = await self.db.execute(
+        semantic_result = await self.db.execute(
             text(f"""
                 SELECT
                     kc.id,
@@ -201,7 +248,75 @@ class RAGService:
             params,
         )
 
-        rows = result.fetchall()
+        rows = list(semantic_result.fetchall())
+
+        if keywords:
+            normalized_content_expr = """
+                translate(
+                    lower(kc.content),
+                    'áéíóúüñÁÉÍÓÚÜÑ',
+                    'aeiouunAEIOUUN'
+                )
+            """
+            keyword_clauses = []
+            keyword_score_parts = []
+            lexical_params = {
+                "embedding": str(query_embedding),
+                "limit": candidate_limit,
+                **filter_params,
+            }
+
+            for index, keyword in enumerate(keywords):
+                param_name = f"keyword_{index}"
+                keyword_clauses.append(
+                    f"{normalized_content_expr} LIKE :{param_name}"
+                )
+                keyword_score_parts.append(
+                    f"CASE WHEN {normalized_content_expr} LIKE :{param_name} "
+                    "THEN 1 ELSE 0 END"
+                )
+                lexical_params[param_name] = f"%{keyword}%"
+
+            lexical_where = [f"({' OR '.join(keyword_clauses)})", *filter_clauses]
+            lexical_result = await self.db.execute(
+                text(f"""
+                    SELECT
+                        kc.id,
+                        kc.content,
+                        kc.manufacturer,
+                        kc.equipment_model,
+                        kc.category,
+                        kd.title as document_title,
+                        kd.source as document_source,
+                        1 - (kc.embedding <=> {vector_expr}) as similarity,
+                        ({' + '.join(keyword_score_parts)}) as keyword_score
+                    FROM knowledge_chunks kc
+                    JOIN knowledge_documents kd ON kd.id = kc.document_id
+                    WHERE {' AND '.join(lexical_where)}
+                    ORDER BY keyword_score DESC, kc.chunk_index ASC
+                    LIMIT :limit
+                """),
+                lexical_params,
+            )
+            rows.extend(lexical_result.fetchall())
+
+        candidates = {}
+        for row in rows:
+            row_id = str(row.id)
+            existing = candidates.get(row_id)
+            if existing is None or float(row.similarity) > float(existing.similarity):
+                candidates[row_id] = row
+
+        ranked_rows = sorted(
+            candidates.values(),
+            key=lambda row: (
+                float(row.similarity)
+                + (self._keyword_score(row.content, keywords) * 0.15),
+                float(row.similarity),
+            ),
+            reverse=True,
+        )[:limit]
+
         return [
             {
                 "id": str(row.id),
@@ -213,7 +328,7 @@ class RAGService:
                 "document_source": row.document_source,
                 "similarity": round(float(row.similarity), 4),
             }
-            for row in rows
+            for row in ranked_rows
         ]
 
     async def build_context(
@@ -246,9 +361,47 @@ class RAGService:
                 source_info += f" | {r['manufacturer']}"
             if r["equipment_model"]:
                 source_info += f" {r['equipment_model']}"
-            context_parts.append(f"---\n{r['content']}\n({source_info})\n")
+            content = r["content"]
+            if r.get("id"):
+                content = await self._expanded_chunk_content(r["id"]) or content
+            context_parts.append(f"---\n{content}\n({source_info})\n")
 
         return "\n".join(context_parts)
+
+    async def _expanded_chunk_content(
+        self,
+        chunk_id: str,
+        neighbor_radius: int = 1,
+    ) -> str:
+        """
+        Expand a selected chunk with nearby chunks from the same document.
+
+        PDFs often split headings and numbered lists across chunk boundaries.
+        Neighbor expansion preserves that local context without increasing the
+        initial retrieval limit too much.
+        """
+        try:
+            parsed_chunk_id = uuid.UUID(chunk_id)
+        except ValueError:
+            return ""
+
+        chunk = await self.db.get(KnowledgeChunk, parsed_chunk_id)
+        if chunk is None:
+            return ""
+
+        result = await self.db.execute(
+            select(KnowledgeChunk)
+            .where(KnowledgeChunk.document_id == chunk.document_id)
+            .where(
+                KnowledgeChunk.chunk_index.between(
+                    chunk.chunk_index - neighbor_radius,
+                    chunk.chunk_index + neighbor_radius,
+                )
+            )
+            .order_by(KnowledgeChunk.chunk_index.asc())
+        )
+        chunks = result.scalars().all()
+        return "\n\n".join(neighbor.content for neighbor in chunks)
 
     async def knowledge_fingerprint(self) -> str:
         """Return a stable fingerprint for the current knowledge base state."""

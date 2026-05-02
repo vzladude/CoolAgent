@@ -163,6 +163,7 @@ class ChatService:
             )
             self.db.add(user_message)
             self.db.add(assistant_message)
+            await self.db.flush()
             await self.usage.record_chat_event(
                 technical_case_id=technical_case_id,
                 message_id=assistant_message.id,
@@ -209,6 +210,7 @@ class ChatService:
                 model_used=f"cache:{cached_response.model}"[:100],
             )
             self.db.add(assistant_message)
+            await self.db.flush()
             await self.usage.record_chat_event(
                 technical_case_id=technical_case_id,
                 message_id=assistant_message.id,
@@ -237,6 +239,7 @@ class ChatService:
             model_used=response.model,
         )
         self.db.add(assistant_message)
+        await self.db.flush()
 
         await self.cache.set_chat_response(
             cache_key,
@@ -287,6 +290,7 @@ class ChatService:
             )
             self.db.add(user_message)
             self.db.add(assistant_message)
+            await self.db.flush()
             await self.usage.record_chat_event(
                 technical_case_id=technical_case_id,
                 message_id=assistant_message.id,
@@ -335,6 +339,7 @@ class ChatService:
                 model_used=f"cache:{cached_response.model}"[:100],
             )
             self.db.add(assistant_message)
+            await self.db.flush()
             await self.usage.record_chat_event(
                 technical_case_id=technical_case_id,
                 message_id=assistant_message.id,
@@ -380,6 +385,7 @@ class ChatService:
             model_used=response_model,
         )
         self.db.add(assistant_message)
+        await self.db.flush()
 
         await self.cache.set_chat_response(
             cache_key,
