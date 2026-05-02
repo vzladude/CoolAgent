@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Plus, Wifi } from 'lucide-react-native';
 import { Text, View } from 'react-native';
 
@@ -12,11 +13,24 @@ import {
   ToolTile,
 } from '../components/ui';
 import { mockCases, primaryTools } from '../mocks/data';
+import { api } from '../services/api';
 import { theme } from '../theme/tokens';
-import type { NavigationApi } from '../types';
+import type { NavigationApi, TechnicalCase } from '../types';
 
 export function HomeScreen({ nav }: { nav: NavigationApi }) {
-  const latestCase = mockCases[0];
+  const [latestCase, setLatestCase] = useState<TechnicalCase>(mockCases[0]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void api.listCases().then((cases) => {
+      if (!cancelled && cases.length > 0) {
+        setLatestCase(cases[0]);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <Screen>
@@ -56,9 +70,9 @@ export function HomeScreen({ nav }: { nav: NavigationApi }) {
       <SectionTitle>Continuar</SectionTitle>
       <ListRow
         title={latestCase.title}
-        subtitle={latestCase.lastMessage}
+        subtitle={latestCase.lastMessage ?? 'Sin mensajes todavia.'}
         meta={`${latestCase.id} / ${latestCase.status.toUpperCase()} / ${latestCase.updatedAt}`}
-        onPress={() => nav.open('chat', { caseId: latestCase.id })}
+        onPress={() => nav.open('chat', { caseId: latestCase.id, case: latestCase })}
       />
 
       <SectionTitle>Herramientas</SectionTitle>

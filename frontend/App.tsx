@@ -62,9 +62,9 @@ function renderRoute(route: AppRoute, nav: NavigationApi) {
     case 'newCase':
       return <NewCaseScreen nav={nav} />;
     case 'chat':
-      return <ChatScreen nav={nav} caseId={route.params?.caseId} />;
+      return <ChatScreen nav={nav} caseId={route.params?.caseId} initialCase={route.params?.case} />;
     case 'caseDetails':
-      return <CaseDetailsScreen nav={nav} caseId={route.params?.caseId} />;
+      return <CaseDetailsScreen nav={nav} caseId={route.params?.caseId} initialCase={route.params?.case} />;
     case 'tools':
       return <ToolsHubScreen nav={nav} />;
     case 'diagnosisCapture':

@@ -27,6 +27,16 @@ Mock data is centralized in `src/mocks/data.ts`. API adapters live in
 `src/services/api.ts`, so each screen can be wired to the backend incrementally
 without redesigning the UI.
 
+The cases/chat flow already tries the backend first:
+
+- Android emulator default: `http://10.0.2.2:8000/api/v1`.
+- iOS simulator default: `http://localhost:8000/api/v1`.
+- Physical phone: set `EXPO_PUBLIC_API_URL` to your computer LAN URL, for
+  example `http://192.168.1.50:8000/api/v1`.
+
+If the backend is unavailable, the app falls back to mock data so UI work can
+continue.
+
 ## Run
 
 Start Expo and open the app with Expo Go on a phone, or use an Android/iOS

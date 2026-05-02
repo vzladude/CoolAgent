@@ -48,16 +48,30 @@ export type TechnicalCase = {
   equipmentModel?: string;
   category?: string;
   status: TechnicalCaseStatus;
+  createdAt?: string;
   updatedAt: string;
-  lastMessage: string;
+  lastMessageAt?: string;
+  lastMessage?: string;
   summary?: string;
 };
 
 export type ChatMessage = {
   id: string;
+  technicalCaseId?: string;
   role: 'user' | 'assistant';
   content: string;
+  tokensUsed?: number;
+  modelUsed?: string;
+  createdAt?: string;
   citations?: RagCitation[];
+};
+
+export type TechnicalCaseInput = {
+  title?: string;
+  manufacturer?: string;
+  equipmentModel?: string;
+  category?: string;
+  status?: TechnicalCaseStatus;
 };
 
 export type RagCitation = {
