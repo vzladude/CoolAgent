@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<title>CoolAgent · Primeras pantallas</title>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Newsreader:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; padding: 0; background: #f0eee9; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  @keyframes cgBlink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+  @keyframes cgPulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(1.2); } }
+  * { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="ios-frame.jsx"></script>
+<script type="text/babel" src="tokens.jsx"></script>
+<script type="text/babel" src="icons.jsx"></script>
+<script type="text/babel" src="splash.jsx"></script>
+<script type="text/babel" src="chat.jsx"></script>
+<script type="text/babel" src="states.jsx"></script>
+
+<script type="text/babel">
+  const { DesignCanvas, DCSection, DCArtboard, IOSDevice } = window;
+
+  // iPhone 15 logical: 393 × 852. Use 393×852 to match iOS frame default-ish.
+  const W = 393, H = 852;
+
+  function Frame({ children, dark }) {
+    return (
+      <IOSDevice width={W} height={H} dark={dark}>
+        <div style={{ width: '100%', height: '100%', overflow: 'hidden', position: 'relative' }}>
+          {children}
+        </div>
+      </IOSDevice>
+    );
+  }
+
+  // Each artboard sized to fit the iPhone frame plus its bezel padding.
+  // The IOSDevice adds bezel; artboard width/height should match the device frame size.
+  // Empirically the IOSDevice renders at width × height of the SCREEN; bezel is outside.
+  // Add ~20px padding around for the frame look.
+  const AW = W + 40, AH = H + 60;
+
+  function App() {
+    return (
+      <DesignCanvas>
+        <DCSection id="overview" title="CoolAgent · Primeras pantallas" subtitle="3 direcciones visuales para iOS · React Native target">
+          <DCArtboard id="readme" label="Resumen" width={420} height={AH}>
+            <div data-screen-label="00 Resumen" style={{
+              width: '100%', height: '100%', padding: 32, boxSizing: 'border-box',
+              background: '#fff', fontFamily: '"Inter Tight", system-ui, sans-serif',
+              color: '#14161C', display: 'flex', flexDirection: 'column', gap: 16,
+              borderRadius: 12, border: '1px solid rgba(20,22,28,0.08)',
+            }}>
+              <div style={{ fontFamily: '"JetBrains Mono", monospace', fontSize: 11, color: '#8A8E96', letterSpacing: '0.12em', textTransform: 'uppercase' }}>v0.1 · 1 may 2026</div>
+              <div style={{ fontSize: 28, fontWeight: 600, letterSpacing: '-0.025em', lineHeight: 1.1 }}>CoolAgent — primeras pantallas</div>
+              <div style={{ fontSize: 14, color: '#5A5E68', lineHeight: 1.55 }}>
+                Diseñé <strong>splash</strong> + <strong>chat del caso con streaming y citas RAG</strong> en 3 direcciones distintas. Tono moderno minimalista, en español, denso pero legible.
+              </div>
+              <div style={{ borderTop: '1px solid rgba(20,22,28,0.08)', paddingTop: 14, fontFamily: '"JetBrains Mono", monospace', fontSize: 11, color: '#5A5E68', lineHeight: 1.8 }}>
+                <div><strong style={{ color: '#14161C', fontFamily: '"Inter Tight"' }}>A · Clean Light</strong> — blanco hueso · acento cobalto · referencia Linear/Notion</div>
+                <div><strong style={{ color: '#14161C', fontFamily: '"Inter Tight"' }}>B · Editorial Dark</strong> — pensado para taller con poca luz · cian eléctrico</div>
+                <div><strong style={{ color: '#14161C', fontFamily: '"Inter Tight"' }}>C · Mono Print</strong> — papel crema · tipografía editorial · estilo manual técnico</div>
+              </div>
+              <div style={{ marginTop: 'auto', fontSize: 12, color: '#8A8E96', lineHeight: 1.5 }}>
+                Cada dirección incluye splash + chat con streaming + un estado (vacío / loading / error). Toca cualquier artboard para verlo a pantalla completa.
+                <div style={{ marginTop: 10, fontFamily: '"JetBrains Mono", monospace', fontSize: 11 }}>
+                  Endpoints: <code>POST /cases</code> · <code>WS /cases/:id/messages/stream</code>
+                </div>
+              </div>
+            </div>
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="clean" title="A · Clean Light" subtitle="Blanco hueso · grafito · acento cobalto frío. Inter Tight + JetBrains Mono.">
+          <DCArtboard id="splash-clean" label="Splash" width={AW} height={AH}>
+            <div data-screen-label="A1 Splash">
+              <Frame dark={false}><window.SplashClean/></Frame>
+            </div>
+          </DCArtboard>
+          <DCArtboard id="chat-clean" label="Chat · streaming + RAG" width={AW} height={AH}>
+            <div data-screen-label="A2 Chat">
+              <Frame dark={false}><window.ChatClean/></Frame>
+            </div>
+          </DCArtboard>
+          <DCArtboard id="empty-clean" label="Caso nuevo · estado vacío" width={AW} height={AH}>
+            <div data-screen-label="A3 Empty">
+              <Frame dark={false}><window.EmptyClean/></Frame>
+            </div>
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="dark" title="B · Editorial Dark" subtitle="Negro cálido · cian eléctrico. Pensado para taller con poca luz.">
+          <DCArtboard id="splash-dark" label="Splash" width={AW} height={AH}>
+            <div data-screen-label="B1 Splash">
+              <Frame dark={true}><window.SplashDark/></Frame>
+            </div>
+          </DCArtboard>
+          <DCArtboard id="chat-dark" label="Chat · streaming + RAG" width={AW} height={AH}>
+            <div data-screen-label="B2 Chat">
+              <Frame dark={true}><window.ChatDark/></Frame>
+            </div>
+          </DCArtboard>
+          <DCArtboard id="loading-dark" label="Pipeline en progreso" width={AW} height={AH}>
+            <div data-screen-label="B3 Loading">
+              <Frame dark={true}><window.LoadingDark/></Frame>
+            </div>
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="mono" title="C · Mono Print" subtitle="Papel crema · serif editorial · estilo manual técnico con citas como notas al pie.">
+          <DCArtboard id="splash-mono" label="Splash" width={AW} height={AH}>
+            <div data-screen-label="C1 Splash">
+              <Frame dark={false}><window.SplashMono/></Frame>
+            </div>
+          </DCArtboard>
+          <DCArtboard id="chat-mono" label="Chat · streaming + RAG" width={AW} height={AH}>
+            <div data-screen-label="C2 Chat">
+              <Frame dark={false}><window.ChatMono/></Frame>
+            </div>
+          </DCArtboard>
+          <DCArtboard id="error-mono" label="Sin conexión / offline" width={AW} height={AH}>
+            <div data-screen-label="C3 Error">
+              <Frame dark={false}><window.ErrorMono/></Frame>
+            </div>
+          </DCArtboard>
+        </DCSection>
+      </DesignCanvas>
+    );
+  }
+
+  ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

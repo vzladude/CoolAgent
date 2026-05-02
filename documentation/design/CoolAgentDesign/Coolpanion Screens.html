@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<title>Coolpanion · Pantallas iOS</title>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; padding: 0; background: #0E0F11; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  @keyframes cgBlink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+  @keyframes cgPulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(1.2); } }
+  @keyframes cgScan { 0% { transform: translateY(-100%); } 100% { transform: translateY(100%); } }
+  * { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="ios-frame.jsx"></script>
+<script type="text/babel" src="tokens.jsx"></script>
+<script type="text/babel" src="icons.jsx"></script>
+<script type="text/babel" src="splash.jsx"></script>
+<script type="text/babel" src="chat.jsx"></script>
+<script type="text/babel" src="states.jsx"></script>
+<script type="text/babel" src="screens-dark.jsx"></script>
+<script type="text/babel" src="screens-home.jsx"></script>
+<script type="text/babel" src="screens-tools.jsx"></script>
+
+<script type="text/babel">
+  const { DesignCanvas, DCSection, DCArtboard, IOSDevice } = window;
+
+  const W = 393, H = 852;
+  const AW = W + 40, AH = H + 60;
+
+  function Frame({ children }) {
+    return (
+      <IOSDevice width={W} height={H} dark={true}>
+        <div style={{ width: '100%', height: '100%', overflow: 'hidden', position: 'relative' }}>
+          {children}
+        </div>
+      </IOSDevice>
+    );
+  }
+
+  function Note({ title, body }) {
+    return (
+      <div style={{
+        width: '100%', height: '100%', padding: 28, boxSizing: 'border-box',
+        background: '#16181B', color: '#F2F3F5',
+        fontFamily: '"Inter Tight", system-ui, sans-serif',
+        border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12,
+        display: 'flex', flexDirection: 'column', gap: 14,
+      }}>
+        <div style={{ fontFamily: '"JetBrains Mono"', fontSize: 11, color: '#5AE0FF', letterSpacing: '0.12em' }}>COOLPANION · MVP MOBILE</div>
+        <div style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-0.025em', lineHeight: 1.15 }}>{title}</div>
+        <div style={{ fontSize: 13, color: '#9BA0A8', lineHeight: 1.55 }}>{body}</div>
+      </div>
+    );
+  }
+
+  function App() {
+    return (
+      <DesignCanvas>
+        <DCSection id="readme" title="Coolpanion · App móvil" subtitle="Caja de herramientas técnica para refrigeración y climatización · iOS · React Native target">
+          <DCArtboard id="intro" label="MVP scope" width={460} height={AH}>
+            <Note
+              title="No es una app de chat. Es una caja de herramientas."
+              body={
+                <>
+                  Navegación por 5 tabs: <strong style={{color:'#F2F3F5'}}>Inicio · Casos · Herramientas · Códigos · Ajustes</strong>.<br/><br/>
+                  El chat vive <em>dentro</em> de un caso técnico, no como home.<br/>
+                  El técnico nunca sube PDFs/manuales: solo ve fuentes consultadas por RAG.<br/>
+                  Calculadoras, códigos, guías y casos recientes funcionan offline.<br/>
+                  Diagnóstico por imagen y chat requieren conexión.
+                </>
+              }
+            />
+          </DCArtboard>
+        </DCSection>
+
+        {/* ─────────── 1 · APP SHELL ─────────── */}
+        <DCSection id="shell" title="1 · App shell" subtitle="Splash, Home (tool hub), empty state inicial, offline">
+          <DCArtboard id="splash" label="1.1 · Splash" width={AW} height={AH}>
+            <div data-screen-label="01 Splash"><Frame><window.SplashUtil/></Frame></div>
+          </DCArtboard>
+          <DCArtboard id="home" label="1.2 · Home / Tool Hub" width={AW} height={AH}>
+            <div data-screen-label="02 Home"><Frame><window.Home/></Frame></div>
+          </DCArtboard>
+          <DCArtboard id="home-empty" label="1.3 · Empty inicial" width={AW} height={AH}>
+            <div data-screen-label="03 Empty"><Frame><window.HomeEmpty/></Frame></div>
+          </DCArtboard>
+          <DCArtboard id="offline" label="1.4 · Offline" width={AW} height={AH}>
+            <div data-screen-label="04 Offline"><Frame><window.OfflineGlobal/></Frame></div>
+          </DCArtboard>
+        </DCSection>
+
+        {/* ─────────── 2 · CASOS + CHAT ─────────── */}
+        <DCSection id="cases" title="2 · Casos técnicos + chat" subtitle="El chat vive dentro del caso. Streaming, RAG y metadata editable.">
+          <DCArtboard id="cases-list" label="2.1 · Lista de casos" width={AW} height={AH}>
+            <div data-screen-label="05 Casos"><Frame><window.CasesList/></Frame></div>
+          </DCArtboard>
+          <DCArtboard id="cases-new" label="2.2 · Nuevo caso" width={AW} height={AH}>
+            <div data-screen-label="06 Nuevo caso"><Frame><window.NewCase/></Frame></div>
+          </DCArtboard>
+          <DCArtboard id="case-empty" label="2.3 · Caso sin mensajes" width={AW} height={AH}>
+            <div data-screen-label="07 Caso vacío"><Frame><window.CaseEmptyChat/></Frame></div>
+          </DCArtboard>
+          <DCArtboard id="case-chat" label="2.4 · Chat (streaming + RAG)" width={AW} height={AH}>
+            <div data-screen-label="08 Chat"><Frame><window.ChatDark/></Frame></div>
+          </DCArtboard>
+          <DCArtboard id="case-detail" label="2.5 · Detalle / metadata" width={AW} height={AH}>
+            <div data-screen-label="09 Detalle"><Frame><window.CaseDetail/></Frame></div>
+          </DCArtboard>
+          <DCArtboard id="case-loading" label="2.6 · Pipeline en progreso" width={AW} height={AH}>
+            <div data-screen-label="10 Pipeline"><Frame><window.LoadingDark/></Frame></div>
+          </DCArtboard>
+          <DCArtboard id="case-out" label="2.7 · Fuera de dominio" width={AW} height={AH}>
+            <div data-screen-label="11 Fuera de dominio"><Frame><window.CaseOutOfDomain/></Frame></div>
+          </DCArtboard>
+        </DCSection>
+
+        {/* ─────────── 3 · HERRAMIENTAS ─────────── */}
+        <DCSection id="tools" title="3 · Herramientas técnicas" subtitle="Hub + diagnóstico por imagen + calculadoras + guías. Offline-first cuando aplica.">
+          <DCArtboard id="tools-hub" label="3.1 · Hub de herramientas" width={AW} height={AH}>
+            <div data-screen-label="12 Herramientas"><Frame><window.ToolsHub/></Frame></div>
+          </DCArtboard>
+          <DCArtboard id="diag-capture" label="3.2 · Diagnóstico · capturar" width={AW} height={AH}>
+            <div data-screen-label="13 Capturar"><Frame><window.DiagCapture/></Frame></div>
+          </DCArtboard>
+          <DCArtboard id="diag-analyzing" label="3.3 · Diagnóstico · analizando" width={AW} height={AH}>
+            <div data-screen-label="14 Analizando"><Frame><window.DiagAnalyzing/></Frame></div>
+          </DCArtboard>
+          <DCArtboard id="diag-result" label="3.4 · Diagnóstico · resultado" width={AW} height={AH}>
+            <div data-screen-label="15 Resultado"><Frame><window.DiagResult/></Frame></div>
+          </DCArtboard>
+          <DCArtboard id="calc-sh" label="3.5 · Superheat" width={AW} height={AH}>
+            <div data-screen-label="16 Superheat"><Frame><window.CalcSuperheat/></Frame></div>
+          </DCArtboard>
+          <DCArtboard id="calc-pt" label="3.6 · PT Chart" width={AW} height={AH}>
+            <div data-screen-label="17 PT"><Frame><window.CalcPT/></Frame></div>
+          </DCArtboard>
+          <DCArtboard id="guide" label="3.7 · Guía · checklist" width={AW} height={AH}>
+            <div data-screen-label="18 Guía"><Frame><window.GuideDetail/></Frame></div>
+          </DCArtboard>
+        </DCSection>
+
+        {/* ─────────── 4 · CÓDIGOS ─────────── */}
+        <DCSection id="codes" title="4 · Códigos de error" subtitle="Buscador + filtros por fabricante + detalle accionable">
+          <DCArtboard id="code-search" label="4.1 · Búsqueda" width={AW} height={AH}>
+            <div data-screen-label="19 Códigos"><Frame><window.ErrorCodes/></Frame></div>
+          </DCArtboard>
+          <DCArtboard id="code-detail" label="4.2 · Detalle del código" width={AW} height={AH}>
+            <div data-screen-label="20 Detalle código"><Frame><window.CodeDetail/></Frame></div>
+          </DCArtboard>
+        </DCSection>
+
+        {/* ─────────── 5 · AJUSTES ─────────── */}
+        <DCSection id="settings" title="5 · Ajustes" subtitle="Perfil local · preferencias · estado · ayuda · seguridad">
+          <DCArtboard id="profile" label="5.1 · Perfil / Ajustes" width={AW} height={AH}>
+            <div data-screen-label="21 Ajustes"><Frame><window.Profile/></Frame></div>
+          </DCArtboard>
+        </DCSection>
+      </DesignCanvas>
+    );
+  }
+
+  ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
