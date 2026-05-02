@@ -86,11 +86,11 @@ export type ErrorCode = {
   code: string;
   manufacturer: string;
   model?: string;
-  severity: 'low' | 'medium' | 'high' | 'critical';
+  severity?: 'low' | 'medium' | 'high' | 'critical';
   description: string;
   possibleCauses: string[];
-  suggestedFix: string;
-  source: string;
+  suggestedFix?: string;
+  source?: string;
 };
 
 export type ManufacturerSummary = {

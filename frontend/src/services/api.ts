@@ -44,6 +44,29 @@ type BackendMessageList = {
   offset: number;
 };
 
+type BackendErrorCode = {
+  id: string;
+  code: string;
+  description: string;
+  manufacturer: string;
+  model: string | null;
+  severity: string | null;
+  possible_causes: string[];
+  suggested_fix: string | null;
+  source: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+type BackendManufacturer = {
+  id: string;
+  name: string;
+  country: string | null;
+  website: string | null;
+  model_count: number;
+  error_code_count: number;
+};
+
 const DEFAULT_API_BASE_URL =
   Platform.OS === 'android'
     ? 'http://10.0.2.2:8000/api/v1'
@@ -108,6 +131,36 @@ function toChatMessage(item: BackendChatMessage): ChatMessage {
     tokensUsed: item.tokens_used ?? undefined,
     modelUsed: item.model_used ?? undefined,
     createdAt: item.created_at,
+  };
+}
+
+function toSeverity(value: string | null): ErrorCode['severity'] {
+  if (value === 'low' || value === 'medium' || value === 'high' || value === 'critical') {
+    return value;
+  }
+  return undefined;
+}
+
+function toErrorCode(item: BackendErrorCode): ErrorCode {
+  return {
+    id: item.id,
+    code: item.code,
+    manufacturer: item.manufacturer,
+    model: item.model ?? undefined,
+    severity: toSeverity(item.severity),
+    description: item.description,
+    possibleCauses: item.possible_causes ?? [],
+    suggestedFix: item.suggested_fix ?? undefined,
+    source: item.source ?? undefined,
+  };
+}
+
+function toManufacturerSummary(item: BackendManufacturer): ManufacturerSummary {
+  return {
+    id: item.id,
+    name: item.name,
+    modelCount: item.model_count,
+    errorCodeCount: item.error_code_count,
   };
 }
 
@@ -247,26 +300,54 @@ export const api = {
   },
 
   async searchErrorCodes(query: {
+    query?: string;
     code?: string;
     manufacturer?: string;
     model?: string;
   }): Promise<ErrorCode[]> {
-    await delay();
-    const code = query.code?.trim().toLowerCase();
-    const manufacturer = query.manufacturer?.trim().toLowerCase();
-    const model = query.model?.trim().toLowerCase();
+    try {
+      const params = new URLSearchParams({ limit: '50', offset: '0' });
+      const queryText = cleanInput(query.query);
+      const code = cleanInput(query.code);
+      const manufacturer = cleanInput(query.manufacturer);
+      const model = cleanInput(query.model);
+      if (queryText) params.set('query', queryText);
+      if (code) params.set('code', code);
+      if (manufacturer) params.set('manufacturer', manufacturer);
+      if (model) params.set('model', model);
 
-    return mockErrorCodes.filter((item) => {
-      const matchesCode = !code || item.code.toLowerCase().includes(code);
-      const matchesManufacturer =
-        !manufacturer || item.manufacturer.toLowerCase().includes(manufacturer);
-      const matchesModel = !model || item.model?.toLowerCase().includes(model);
-      return matchesCode && matchesManufacturer && matchesModel;
-    });
+      const data = await requestJson<BackendErrorCode[]>(`/error-codes/?${params.toString()}`);
+      return data.map(toErrorCode);
+    } catch {
+      await delay();
+      const queryText = query.query?.trim().toLowerCase();
+      const code = query.code?.trim().toLowerCase();
+      const manufacturer = query.manufacturer?.trim().toLowerCase();
+      const model = query.model?.trim().toLowerCase();
+
+      return mockErrorCodes.filter((item) => {
+        const matchesQuery =
+          !queryText ||
+          item.code.toLowerCase().includes(queryText) ||
+          item.description.toLowerCase().includes(queryText) ||
+          item.manufacturer.toLowerCase().includes(queryText) ||
+          item.model?.toLowerCase().includes(queryText);
+        const matchesCode = !code || item.code.toLowerCase().includes(code);
+        const matchesManufacturer =
+          !manufacturer || item.manufacturer.toLowerCase().includes(manufacturer);
+        const matchesModel = !model || item.model?.toLowerCase().includes(model);
+        return matchesQuery && matchesCode && matchesManufacturer && matchesModel;
+      });
+    }
   },
 
   async listManufacturers(): Promise<ManufacturerSummary[]> {
-    await delay();
-    return mockManufacturers;
+    try {
+      const data = await requestJson<BackendManufacturer[]>('/error-codes/manufacturers');
+      return data.map(toManufacturerSummary);
+    } catch {
+      await delay();
+      return mockManufacturers;
+    }
   },
 };

@@ -120,6 +120,30 @@ async def test_search_error_codes_filters_by_code_manufacturer_and_model(
 
 
 @pytest.mark.asyncio
+async def test_search_error_codes_query_matches_description_and_model(
+    error_codes_app,
+    db_session,
+):
+    await seed_error_codes(db_session)
+
+    transport = ASGITransport(app=error_codes_app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        description_response = await client.get(
+            "/error-codes/",
+            params={"query": "comunicacion"},
+        )
+        model_response = await client.get(
+            "/error-codes/",
+            params={"query": "38AKS"},
+        )
+
+    assert description_response.status_code == 200
+    assert [item["code"] for item in description_response.json()] == ["U4"]
+    assert model_response.status_code == 200
+    assert {item["code"] for item in model_response.json()} == {"E7", "E8"}
+
+
+@pytest.mark.asyncio
 async def test_list_manufacturers_returns_real_counts(error_codes_app, db_session):
     await seed_error_codes(db_session)
 

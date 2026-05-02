@@ -86,7 +86,7 @@ function renderRoute(route: AppRoute, nav: NavigationApi) {
     case 'codes':
       return <ErrorCodesScreen nav={nav} />;
     case 'codeDetail':
-      return <ErrorCodeDetailScreen nav={nav} codeId={route.params?.codeId} />;
+      return <ErrorCodeDetailScreen nav={nav} codeId={route.params?.codeId} initialCode={route.params?.code} />;
     case 'settings':
       return <SettingsScreen nav={nav} />;
     default:

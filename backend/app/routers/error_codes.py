@@ -3,7 +3,7 @@ Error-code endpoints by manufacturer and model.
 """
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy import distinct, func, select
+from sqlalchemy import distinct, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
@@ -15,6 +15,7 @@ router = APIRouter()
 
 @router.get("/", response_model=list[ErrorCodeResponse])
 async def search_error_codes(
+    query: str | None = Query(None, description="Buscar en codigo, descripcion, fabricante o modelo"),
     code: str | None = Query(None, description="Codigo de error a buscar"),
     manufacturer: str | None = Query(None, description="Filtrar por fabricante"),
     model: str | None = Query(None, description="Filtrar por modelo"),
@@ -24,6 +25,16 @@ async def search_error_codes(
 ):
     """Search error codes with optional manufacturer/model filters."""
     filters = []
+    if query:
+        pattern = f"%{query.strip()}%"
+        filters.append(
+            or_(
+                ErrorCode.code.ilike(pattern),
+                ErrorCode.description.ilike(pattern),
+                ErrorCode.manufacturer.ilike(pattern),
+                ErrorCode.model.ilike(pattern),
+            )
+        )
     if code:
         filters.append(ErrorCode.code.ilike(f"%{code.strip()}%"))
     if manufacturer:
