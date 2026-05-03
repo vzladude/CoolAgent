@@ -3,6 +3,7 @@ from app.models.technical_case import Message, TechnicalCase
 from app.models.knowledge import KnowledgeDocument, KnowledgeChunk
 from app.models.error_code import ErrorCode, Manufacturer
 from app.models.usage import UsageEvent
+from app.models.user import User
 
 __all__ = [
     "TechnicalCase",
@@ -13,4 +14,5 @@ __all__ = [
     "ErrorCode",
     "Manufacturer",
     "UsageEvent",
+    "User",
 ]

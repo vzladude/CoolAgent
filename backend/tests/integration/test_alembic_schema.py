@@ -214,3 +214,46 @@ async def test_alembic_prepares_error_code_search_schema(db_session):
         """)
     )
     assert review_status_check.scalar_one() == "ck_error_codes_review_status"
+
+
+@pytest.mark.asyncio
+async def test_alembic_creates_users_auth_schema(db_session):
+    users_table = await db_session.execute(
+        text("""
+            SELECT tablename
+              FROM pg_tables
+             WHERE schemaname = 'public'
+               AND tablename = 'users'
+        """)
+    )
+    assert users_table.scalar_one() == "users"
+
+    email_column = await db_session.execute(
+        text("""
+            SELECT column_name
+              FROM information_schema.columns
+             WHERE table_name = 'users'
+               AND column_name = 'email'
+        """)
+    )
+    assert email_column.scalar_one() == "email"
+
+    unique_email = await db_session.execute(
+        text("""
+            SELECT conname
+              FROM pg_constraint
+             WHERE conrelid = 'users'::regclass
+               AND conname = 'uq_users_email'
+        """)
+    )
+    assert unique_email.scalar_one() == "uq_users_email"
+
+    email_index = await db_session.execute(
+        text("""
+            SELECT indexname
+              FROM pg_indexes
+             WHERE tablename = 'users'
+               AND indexname = 'ix_users_email'
+        """)
+    )
+    assert email_index.scalar_one() == "ix_users_email"

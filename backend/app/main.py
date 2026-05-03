@@ -10,7 +10,7 @@ from sqlalchemy import text
 
 from app.config import get_settings
 from app.database import engine, Base, ensure_development_schema
-from app.routers import chat, diagnosis, error_codes, health, knowledge, usage
+from app.routers import auth, chat, diagnosis, error_codes, health, knowledge, usage
 
 
 @asynccontextmanager
@@ -59,6 +59,11 @@ def create_app() -> FastAPI:
 
     # Routers
     app.include_router(health.router, tags=["Health"])
+    app.include_router(
+        auth.router,
+        prefix=f"{settings.api_v1_prefix}/auth",
+        tags=["Auth"],
+    )
     app.include_router(
         chat.router,
         prefix=f"{settings.api_v1_prefix}/chat",

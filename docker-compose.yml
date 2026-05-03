@@ -63,6 +63,8 @@ services:
     restart: unless-stopped
     environment:
       - ENVIRONMENT=${ENVIRONMENT:-development}
+      - SECRET_KEY=${SECRET_KEY:-cambiar-en-produccion-por-algo-seguro}
+      - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES:-30}
       - AI_PROVIDER_NAME=${AI_PROVIDER_NAME:-claude}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - CLAUDE_CHAT_MODEL=${CLAUDE_CHAT_MODEL:-claude-haiku-4-5-20251001}

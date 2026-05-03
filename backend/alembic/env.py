@@ -27,6 +27,7 @@ from app.models import (  # noqa: F401
     Message,
     TechnicalCase,
     UsageEvent,
+    User,
 )
 
 config = context.config

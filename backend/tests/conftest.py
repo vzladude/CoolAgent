@@ -92,6 +92,7 @@ async def db_session(migrated_test_database_url):
     async with engine.begin() as conn:
         await conn.execute(text("""
             TRUNCATE
+                users,
                 usage_events,
                 knowledge_chunks,
                 knowledge_documents,

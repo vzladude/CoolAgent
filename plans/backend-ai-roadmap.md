@@ -1,6 +1,6 @@
 # CoolAgent - Backend AI Roadmap
 
-**Estado actual:** Backend base funcional con Claude Haiku API, PostgreSQL/pgvector, Redis, MinIO, RAG probado end-to-end, guardrails de dominio, usage/cache exacto, streaming WebSocket, casos tecnicos con contexto robusto y catalogo de codigos de error derivado de Knowledge.
+**Estado actual:** Backend base funcional con Claude Haiku API, PostgreSQL/pgvector, Redis, MinIO, RAG probado end-to-end, guardrails de dominio, usage/cache exacto, streaming WebSocket, casos tecnicos con contexto robusto, catalogo de codigos de error derivado de Knowledge y base inicial de autenticacion de usuarios.
 **Fecha de corte:** 3 de mayo de 2026
 **Uso de esta carpeta:** `plans/` contiene planes temporales de la tarea activa. La fuente central de verdad vive en `documentation/CoolAgent_Documentacion_Maestra.docx`.
 **Nota:** No se planea pasar a staging/produccion pronto. Alembic se agrega ahora para que ese futuro paso sea mas simple y seguro.
@@ -250,6 +250,49 @@ Nota de validacion pendiente: el flujo tecnico esta cubierto por tests automatic
 
 ---
 
+## Fase E0 - Auth y registro de usuarios - BASE IMPLEMENTADA
+
+**Prioridad:** ALTA  
+**Impacto:** Prepara CoolAgent para cuentas reales, ownership de datos y monetizacion futura.
+
+### Estado actual
+
+Se implemento la base de autenticacion sin forzar todavia login en todos los endpoints. Esto evita romper el flujo local mientras el producto sigue en desarrollo, pero deja listo el registro/login para conectar el frontend mobile.
+
+### Implementado
+
+1. Tabla `users` con migracion Alembic `20260503_0008`.
+2. Modelo `User` con email unico, nombre, hash de password, rol, estado activo/verificado y fechas.
+3. Password hashing con `bcrypt` + pre-hash SHA-256 para evitar el limite interno de 72 bytes de bcrypt.
+4. JWT access token con `HS256`, usando `SECRET_KEY` y `ACCESS_TOKEN_EXPIRE_MINUTES`.
+5. Endpoints:
+   - `POST /api/v1/auth/register`
+   - `POST /api/v1/auth/login`
+   - `GET /api/v1/auth/me`
+6. Tests de registro, email duplicado, login, token bearer y schema Alembic.
+7. Migracion aplicada localmente con `alembic upgrade head`.
+8. Tests Docker: `64 passed`.
+
+### Pendiente
+
+1. Conectar pantallas mobile de registro/login.
+2. Decidir cuando proteger endpoints existentes con `get_current_user`.
+3. Asociar `technical_cases`, usage y futuros recursos a `user_id`.
+4. Definir recuperacion de password y verificacion de email cuando se acerque uso real.
+5. Disenar roles/admin junto con backoffice de Knowledge/codigos.
+6. Mantener rate limiting y monetizacion como fase futura, despues de usuarios/planes.
+
+### Archivos principales
+
+- `backend/app/models/user.py`
+- `backend/app/routers/auth.py`
+- `backend/app/services/auth_service.py`
+- `backend/app/schemas/auth.py`
+- `backend/alembic/versions/20260503_0008_users_auth.py`
+- `backend/tests/integration/test_auth_api.py`
+
+---
+
 ## Fase E - Frontend MVP
 
 **Prioridad:** DESPUES DE CERRAR RAG  
@@ -257,4 +300,4 @@ Nota de validacion pendiente: el flujo tecnico esta cubierto por tests automatic
 
 ### Nota
 
-El frontend ya puede planificarse sobre el contrato oficial de casos tecnicos: lista de casos, chat activo con streaming y panel editable de metadata. Antes de implementarlo conviene decidir si Fase D de codigos de error debe ir primero o si el MVP movil puede arrancar consumiendo solo chat/RAG/usage.
+El frontend ya puede avanzar con auth basico, home, casos tecnicos, chat activo con streaming y panel editable de metadata. La integracion completa de codigos de error queda retenida hasta validar el extractor con un manual real.
