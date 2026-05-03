@@ -1,7 +1,7 @@
 # CoolAgent - Backend AI Roadmap
 
 **Estado actual:** Backend base funcional con Claude Haiku API, PostgreSQL/pgvector, Redis, MinIO, RAG probado end-to-end, guardrails de dominio, usage/cache exacto, streaming WebSocket, casos tecnicos con contexto robusto y catalogo de codigos de error derivado de Knowledge.
-**Fecha de corte:** 2 de mayo de 2026
+**Fecha de corte:** 3 de mayo de 2026
 **Uso de esta carpeta:** `plans/` contiene planes temporales de la tarea activa. La fuente central de verdad vive en `documentation/CoolAgent_Documentacion_Maestra.docx`.
 **Nota:** No se planea pasar a staging/produccion pronto. Alembic se agrega ahora para que ese futuro paso sea mas simple y seguro.
 
@@ -213,6 +213,8 @@ El dominio oficial del chat pasa de `Conversation` a `TechnicalCase`. Un caso te
 
 La base tecnica ya esta implementada. `knowledge_documents` y `knowledge_chunks` siguen siendo la fuente de verdad. `error_codes` funciona como un indice estructurado y revisado derivado de esos documentos, no como una base de conocimiento paralela.
 
+Nota de validacion pendiente: el flujo tecnico esta cubierto por tests automaticos, pero aun falta probarlo con un manual real de codigos de error. El usuario espera recibir ese documento en los proximos dias. Hasta completar esa prueba, no asumir que el extractor simple es suficiente para tablas complejas de fabricantes.
+
 ### Implementado
 
 1. Migracion Alembic `20260501_0006` agrega `source`, `updated_at` e indices por fabricante/modelo.
@@ -233,10 +235,12 @@ La base tecnica ya esta implementada. `knowledge_documents` y `knowledge_chunks`
 
 ### Pendiente de contenido
 
-1. Usar Swagger como flujo provisional para extraer, corregir y aprobar codigos hasta que exista un admin/backoffice.
-2. Mejorar el extractor con LLM o parser por fabricante si los manuales reales tienen tablas complejas.
-3. Definir formato de sync offline para que el frontend movil descargue solo codigos aprobados.
-4. Mantener revision humana antes de publicar codigos al tecnico.
+1. Probar con un manual real de codigos de error cuando este disponible.
+2. Usar Swagger como flujo provisional para extraer, corregir y aprobar codigos hasta que exista un admin/backoffice.
+3. Comparar resultados del extractor contra el manual fuente: codigos detectados, descripciones, paginas/excerpts y falsos positivos.
+4. Mejorar el extractor con LLM o parser por fabricante si los manuales reales tienen tablas complejas.
+5. Definir formato de sync offline para que el frontend movil descargue solo codigos aprobados.
+6. Mantener revision humana antes de publicar codigos al tecnico.
 
 ### Archivos esperados
 
