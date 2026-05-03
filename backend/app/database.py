@@ -330,7 +330,53 @@ async def ensure_development_schema(conn) -> None:
         ALTER TABLE error_codes
             ADD COLUMN IF NOT EXISTS source VARCHAR(500),
             ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE
-                NOT NULL DEFAULT now()
+                NOT NULL DEFAULT now(),
+            ADD COLUMN IF NOT EXISTS source_document_id UUID,
+            ADD COLUMN IF NOT EXISTS source_chunk_id UUID,
+            ADD COLUMN IF NOT EXISTS source_page INTEGER,
+            ADD COLUMN IF NOT EXISTS source_excerpt TEXT,
+            ADD COLUMN IF NOT EXISTS review_status VARCHAR(30)
+                NOT NULL DEFAULT 'approved',
+            ADD COLUMN IF NOT EXISTS confidence DOUBLE PRECISION,
+            ADD COLUMN IF NOT EXISTS extraction_metadata JSON
+    """))
+    await conn.execute(text("""
+        DO $$
+        BEGIN
+            IF NOT EXISTS (
+                SELECT 1 FROM pg_constraint
+                 WHERE conname = 'fk_error_codes_source_document_id_knowledge_documents'
+                   AND conrelid = 'public.error_codes'::regclass
+            ) THEN
+                ALTER TABLE error_codes
+                ADD CONSTRAINT fk_error_codes_source_document_id_knowledge_documents
+                FOREIGN KEY (source_document_id)
+                REFERENCES knowledge_documents(id)
+                ON DELETE SET NULL;
+            END IF;
+
+            IF NOT EXISTS (
+                SELECT 1 FROM pg_constraint
+                 WHERE conname = 'fk_error_codes_source_chunk_id_knowledge_chunks'
+                   AND conrelid = 'public.error_codes'::regclass
+            ) THEN
+                ALTER TABLE error_codes
+                ADD CONSTRAINT fk_error_codes_source_chunk_id_knowledge_chunks
+                FOREIGN KEY (source_chunk_id)
+                REFERENCES knowledge_chunks(id)
+                ON DELETE SET NULL;
+            END IF;
+
+            IF NOT EXISTS (
+                SELECT 1 FROM pg_constraint
+                 WHERE conname = 'ck_error_codes_review_status'
+                   AND conrelid = 'public.error_codes'::regclass
+            ) THEN
+                ALTER TABLE error_codes
+                ADD CONSTRAINT ck_error_codes_review_status
+                CHECK (review_status IN ('pending_review', 'approved', 'rejected'));
+            END IF;
+        END $$;
     """))
     await conn.execute(text("""
         CREATE INDEX IF NOT EXISTS ix_error_codes_manufacturer
@@ -347,4 +393,16 @@ async def ensure_development_schema(conn) -> None:
     await conn.execute(text("""
         CREATE INDEX IF NOT EXISTS ix_error_codes_updated_at
         ON error_codes (updated_at)
+    """))
+    await conn.execute(text("""
+        CREATE INDEX IF NOT EXISTS ix_error_codes_review_status
+        ON error_codes (review_status)
+    """))
+    await conn.execute(text("""
+        CREATE INDEX IF NOT EXISTS ix_error_codes_source_document_id
+        ON error_codes (source_document_id)
+    """))
+    await conn.execute(text("""
+        CREATE INDEX IF NOT EXISTS ix_error_codes_source_chunk_id
+        ON error_codes (source_chunk_id)
     """))

@@ -184,3 +184,33 @@ async def test_alembic_prepares_error_code_search_schema(db_session):
         """)
     )
     assert manufacturer_model_index.scalar_one() == "ix_error_codes_manufacturer_model"
+
+    review_status_column = await db_session.execute(
+        text("""
+            SELECT column_name
+              FROM information_schema.columns
+             WHERE table_name = 'error_codes'
+               AND column_name = 'review_status'
+        """)
+    )
+    assert review_status_column.scalar_one() == "review_status"
+
+    source_document_column = await db_session.execute(
+        text("""
+            SELECT column_name
+              FROM information_schema.columns
+             WHERE table_name = 'error_codes'
+               AND column_name = 'source_document_id'
+        """)
+    )
+    assert source_document_column.scalar_one() == "source_document_id"
+
+    review_status_check = await db_session.execute(
+        text("""
+            SELECT conname
+              FROM pg_constraint
+             WHERE conrelid = 'error_codes'::regclass
+               AND conname = 'ck_error_codes_review_status'
+        """)
+    )
+    assert review_status_check.scalar_one() == "ck_error_codes_review_status"

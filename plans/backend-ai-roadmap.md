@@ -1,7 +1,7 @@
 # CoolAgent - Backend AI Roadmap
 
-**Estado actual:** Backend base funcional con Claude Haiku API, PostgreSQL/pgvector, Redis, MinIO, RAG probado end-to-end, guardrails de dominio, usage/cache exacto, streaming WebSocket, casos tecnicos con contexto robusto y base inicial de codigos de error.
-**Fecha de corte:** 1 de mayo de 2026
+**Estado actual:** Backend base funcional con Claude Haiku API, PostgreSQL/pgvector, Redis, MinIO, RAG probado end-to-end, guardrails de dominio, usage/cache exacto, streaming WebSocket, casos tecnicos con contexto robusto y catalogo de codigos de error derivado de Knowledge.
+**Fecha de corte:** 2 de mayo de 2026
 **Uso de esta carpeta:** `plans/` contiene planes temporales de la tarea activa. La fuente central de verdad vive en `documentation/CoolAgent_Documentacion_Maestra.docx`.
 **Nota:** No se planea pasar a staging/produccion pronto. Alembic se agrega ahora para que ese futuro paso sea mas simple y seguro.
 
@@ -204,14 +204,14 @@ El dominio oficial del chat pasa de `Conversation` a `TechnicalCase`. Un caso te
 
 ---
 
-## Fase D - Base de datos de codigos de error - BASE IMPLEMENTADA
+## Fase D - Codigos de error derivados de Knowledge - IMPLEMENTADA
 
 **Prioridad:** MEDIA  
 **Impacto:** Feature util para modo offline y diagnostico rapido.
 
 ### Estado actual
 
-La base tecnica ya esta implementada. Los endpoints consultan la base real en vez de devolver listas vacias.
+La base tecnica ya esta implementada. `knowledge_documents` y `knowledge_chunks` siguen siendo la fuente de verdad. `error_codes` funciona como un indice estructurado y revisado derivado de esos documentos, no como una base de conocimiento paralela.
 
 ### Implementado
 
@@ -222,16 +222,25 @@ La base tecnica ya esta implementada. Los endpoints consultan la base real en ve
 5. El seed no inventa codigos. El arreglo `TRUSTED_ERROR_CODES` queda listo para agregar codigos solo cuando provengan de manuales, boletines o fuentes trazables.
 6. Validacion local: 8 fabricantes cargados, 0 codigos inventados, RAG intacto.
 7. Tests Docker: `54 passed`.
+8. Migracion Alembic `20260502_0007` agrega trazabilidad desde `error_codes` hacia `knowledge_documents` y `knowledge_chunks`.
+9. Cada codigo derivado guarda `source_document_id`, `source_chunk_id`, `source_page`, `source_excerpt`, `confidence`, `extraction_metadata` y `review_status`.
+10. Endpoint `POST /api/v1/error-codes/extract/from-document/{document_id}` extrae candidatos desde un documento ya cargado en RAG.
+11. Los candidatos extraidos quedan por defecto en `pending_review`; no aparecen en la busqueda normal del tecnico hasta aprobarlos.
+12. Endpoint `PATCH /api/v1/error-codes/{error_code_id}/review` permite aprobar, rechazar o devolver un codigo a pendiente.
+13. `GET /api/v1/error-codes/` y `GET /api/v1/error-codes/manufacturers` filtran por `review_status`, usando `approved` por defecto para proteger la UX mobile.
+14. Tests Docker: `57 passed`.
 
 ### Pendiente de contenido
 
-1. Cargar codigos reales por fabricante/modelo desde manuales confiables.
-2. Relacionar codigos con documentos RAG cuando exista fuente/documento asociado.
-3. Definir formato de sync offline cuando el frontend movil exista.
+1. Usar Swagger como flujo provisional para extraer y aprobar codigos hasta que exista un admin/backoffice.
+2. Mejorar el extractor con LLM o parser por fabricante si los manuales reales tienen tablas complejas.
+3. Definir formato de sync offline para que el frontend movil descargue solo codigos aprobados.
+4. Mantener revision humana antes de publicar codigos al tecnico.
 
 ### Archivos esperados
 
 - `backend/app/routers/error_codes.py`
+- `backend/app/services/error_code_extraction_service.py`
 - `backend/scripts/seed_error_codes.py`
 
 ---

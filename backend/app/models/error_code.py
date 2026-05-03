@@ -5,7 +5,7 @@ Modelos de Códigos de Error — Base de datos de errores HVAC/R.
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import DateTime, ForeignKey, JSON, String, Text
+from sqlalchemy import DateTime, Float, ForeignKey, Integer, JSON, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -53,6 +53,21 @@ class ErrorCode(Base):
     possible_causes: Mapped[list[str] | None] = mapped_column(JSON, nullable=True)
     suggested_fix: Mapped[str | None] = mapped_column(Text, nullable=True)
     source: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    source_document_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("knowledge_documents.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    source_chunk_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("knowledge_chunks.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    source_page: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    source_excerpt: Mapped[str | None] = mapped_column(Text, nullable=True)
+    review_status: Mapped[str] = mapped_column(String(30), default="approved")
+    confidence: Mapped[float | None] = mapped_column(Float, nullable=True)
+    extraction_metadata: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )
@@ -66,3 +81,5 @@ class ErrorCode(Base):
     manufacturer_rel: Mapped["Manufacturer"] = relationship(
         back_populates="error_codes"
     )
+    source_document = relationship("KnowledgeDocument")
+    source_chunk = relationship("KnowledgeChunk")

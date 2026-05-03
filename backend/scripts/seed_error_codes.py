@@ -86,6 +86,7 @@ async def upsert_error_code(
             possible_causes=data.get("possible_causes") or [],
             suggested_fix=data.get("suggested_fix"),
             source=data.get("source"),
+            review_status="approved",
             created_at=datetime.now(timezone.utc),
             updated_at=datetime.now(timezone.utc),
         )
@@ -98,6 +99,7 @@ async def upsert_error_code(
     error_code.possible_causes = data.get("possible_causes") or []
     error_code.suggested_fix = data.get("suggested_fix")
     error_code.source = data.get("source")
+    error_code.review_status = "approved"
     error_code.updated_at = datetime.now(timezone.utc)
     return error_code
 
