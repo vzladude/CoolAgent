@@ -257,3 +257,91 @@ async def test_extract_error_codes_from_knowledge_requires_review_before_search(
     assert len(approved_body) == 1
     assert approved_body[0]["code"] == "E7"
     assert approved_body[0]["source"] == "Manual PDF Carrier 38AKS"
+
+
+@pytest.mark.asyncio
+async def test_update_error_code_candidate_before_approval(
+    error_codes_app,
+    db_session,
+):
+    document = await seed_knowledge_manual(db_session)
+
+    transport = ASGITransport(app=error_codes_app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        extract_response = await client.post(
+            f"/error-codes/extract/from-document/{document.id}",
+            json={"auto_approve": False},
+        )
+        candidate = extract_response.json()["error_codes"][0]
+
+        update_response = await client.patch(
+            f"/error-codes/{candidate['id']}",
+            json={
+                "description": "Sensor de evaporador fuera de rango o desconectado.",
+                "severity": "High",
+                "possible_causes": [
+                    "Sensor abierto",
+                    "Conector sulfatado",
+                    "   ",
+                ],
+                "suggested_fix": "Medir resistencia del sensor y revisar conectores.",
+                "model": "38AKS-RGC",
+                "source_page": 13,
+                "source_excerpt": "Codigo E7: Sensor de evaporador fuera de rango.",
+            },
+        )
+        review_response = await client.patch(
+            f"/error-codes/{candidate['id']}/review",
+            json={"review_status": "approved"},
+        )
+        search_response = await client.get(
+            "/error-codes/",
+            params={"query": "desconectado", "model": "RGC"},
+        )
+
+    assert update_response.status_code == 200
+    updated = update_response.json()
+    assert updated["description"] == (
+        "Sensor de evaporador fuera de rango o desconectado."
+    )
+    assert updated["severity"] == "high"
+    assert updated["possible_causes"] == ["Sensor abierto", "Conector sulfatado"]
+    assert updated["suggested_fix"] == (
+        "Medir resistencia del sensor y revisar conectores."
+    )
+    assert updated["model"] == "38AKS-RGC"
+    assert updated["source_page"] == 13
+    assert updated["review_status"] == "pending_review"
+
+    assert review_response.status_code == 200
+    assert review_response.json()["review_status"] == "approved"
+
+    assert search_response.status_code == 200
+    body = search_response.json()
+    assert len(body) == 1
+    assert body[0]["id"] == candidate["id"]
+
+
+@pytest.mark.asyncio
+async def test_update_error_code_rejects_invalid_severity(
+    error_codes_app,
+    db_session,
+):
+    await seed_error_codes(db_session)
+
+    transport = ASGITransport(app=error_codes_app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        search_response = await client.get(
+            "/error-codes/",
+            params={"query": "E7"},
+        )
+        error_code_id = search_response.json()[0]["id"]
+        update_response = await client.patch(
+            f"/error-codes/{error_code_id}",
+            json={"severity": "urgent"},
+        )
+
+    assert update_response.status_code == 422
+    assert update_response.json()["detail"] == (
+        "severity debe ser low, medium, high o critical"
+    )

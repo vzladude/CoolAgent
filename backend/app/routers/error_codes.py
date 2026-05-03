@@ -2,6 +2,7 @@
 Error-code endpoints by manufacturer and model.
 """
 
+from datetime import datetime, timezone
 from uuid import UUID
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Query
@@ -15,6 +16,7 @@ from app.schemas.error_codes import (
     ErrorCodeExtractionResponse,
     ErrorCodeResponse,
     ErrorCodeReviewRequest,
+    ErrorCodeUpdateRequest,
     ManufacturerResponse,
 )
 from app.services.error_code_extraction_service import (
@@ -23,6 +25,8 @@ from app.services.error_code_extraction_service import (
 )
 
 router = APIRouter()
+
+VALID_SEVERITIES = {"low", "medium", "high", "critical"}
 
 
 @router.get("/", response_model=list[ErrorCodeResponse])
@@ -178,6 +182,48 @@ async def review_error_code(
     return _error_code_response(error_code)
 
 
+@router.patch("/{error_code_id}", response_model=ErrorCodeResponse)
+async def update_error_code(
+    error_code_id: UUID,
+    payload: ErrorCodeUpdateRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    """Edit a candidate before approving it for technician-facing search."""
+    error_code = await db.get(ErrorCode, error_code_id)
+    if error_code is None:
+        raise HTTPException(status_code=404, detail="Codigo de error no encontrado")
+
+    updates = payload.model_dump(exclude_unset=True)
+    if not updates:
+        return _error_code_response(error_code)
+
+    if "code" in updates:
+        error_code.code = _required_clean(updates["code"], "code").upper()
+    if "description" in updates:
+        error_code.description = _required_clean(
+            updates["description"],
+            "description",
+        )
+    if "model" in updates:
+        error_code.model = _optional_clean(updates["model"])
+    if "severity" in updates:
+        error_code.severity = _validate_severity(updates["severity"])
+    if "possible_causes" in updates:
+        error_code.possible_causes = _clean_causes(updates["possible_causes"])
+    if "suggested_fix" in updates:
+        error_code.suggested_fix = _optional_clean(updates["suggested_fix"])
+    if "source" in updates:
+        error_code.source = _optional_clean(updates["source"])
+    if "source_page" in updates:
+        error_code.source_page = updates["source_page"]
+    if "source_excerpt" in updates:
+        error_code.source_excerpt = _optional_clean(updates["source_excerpt"])
+
+    error_code.updated_at = datetime.now(timezone.utc)
+    await db.flush()
+    return _error_code_response(error_code)
+
+
 def _error_code_response(error_code: ErrorCode) -> ErrorCodeResponse:
     return ErrorCodeResponse(
         id=error_code.id,
@@ -198,3 +244,39 @@ def _error_code_response(error_code: ErrorCode) -> ErrorCodeResponse:
         created_at=error_code.created_at,
         updated_at=error_code.updated_at,
     )
+
+
+def _optional_clean(value: str | None) -> str | None:
+    if value is None:
+        return None
+    cleaned = value.strip()
+    return cleaned or None
+
+
+def _required_clean(value: str | None, field_name: str) -> str:
+    cleaned = _optional_clean(value)
+    if cleaned is None:
+        raise HTTPException(
+            status_code=422,
+            detail=f"{field_name} no puede estar vacio",
+        )
+    return cleaned
+
+
+def _validate_severity(value: str | None) -> str | None:
+    cleaned = _optional_clean(value)
+    if cleaned is None:
+        return None
+    normalized = cleaned.lower()
+    if normalized not in VALID_SEVERITIES:
+        raise HTTPException(
+            status_code=422,
+            detail="severity debe ser low, medium, high o critical",
+        )
+    return normalized
+
+
+def _clean_causes(values: list[str] | None) -> list[str]:
+    if values is None:
+        return []
+    return [cleaned for value in values if (cleaned := value.strip())]

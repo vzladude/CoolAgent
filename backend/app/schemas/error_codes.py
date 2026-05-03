@@ -65,3 +65,28 @@ class ErrorCodeReviewRequest(BaseModel):
         ...,
         description="Estado de revision: pending_review, approved o rejected.",
     )
+
+
+class ErrorCodeUpdateRequest(BaseModel):
+    code: str | None = Field(None, description="Codigo de error corregido.")
+    description: str | None = Field(None, description="Descripcion tecnica corregida.")
+    model: str | None = Field(None, description="Modelo asociado al codigo.")
+    severity: str | None = Field(
+        None,
+        description="Severidad: low, medium, high o critical.",
+    )
+    possible_causes: list[str] | None = Field(
+        None,
+        description="Causas probables revisadas.",
+    )
+    suggested_fix: str | None = Field(None, description="Solucion sugerida revisada.")
+    source: str | None = Field(None, description="Fuente legible para mostrar.")
+    source_page: int | None = Field(
+        None,
+        ge=1,
+        description="Pagina de la fuente donde aparece el codigo.",
+    )
+    source_excerpt: str | None = Field(
+        None,
+        description="Fragmento corto de fuente usado para revisar el codigo.",
+    )

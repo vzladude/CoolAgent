@@ -227,12 +227,13 @@ La base tecnica ya esta implementada. `knowledge_documents` y `knowledge_chunks`
 10. Endpoint `POST /api/v1/error-codes/extract/from-document/{document_id}` extrae candidatos desde un documento ya cargado en RAG.
 11. Los candidatos extraidos quedan por defecto en `pending_review`; no aparecen en la busqueda normal del tecnico hasta aprobarlos.
 12. Endpoint `PATCH /api/v1/error-codes/{error_code_id}/review` permite aprobar, rechazar o devolver un codigo a pendiente.
-13. `GET /api/v1/error-codes/` y `GET /api/v1/error-codes/manufacturers` filtran por `review_status`, usando `approved` por defecto para proteger la UX mobile.
-14. Tests Docker: `57 passed`.
+13. Endpoint `PATCH /api/v1/error-codes/{error_code_id}` permite corregir un candidato antes de aprobarlo: codigo, descripcion, modelo, severidad, causas probables, solucion sugerida, fuente, pagina y excerpt.
+14. `GET /api/v1/error-codes/` y `GET /api/v1/error-codes/manufacturers` filtran por `review_status`, usando `approved` por defecto para proteger la UX mobile.
+15. Tests Docker: `59 passed`.
 
 ### Pendiente de contenido
 
-1. Usar Swagger como flujo provisional para extraer y aprobar codigos hasta que exista un admin/backoffice.
+1. Usar Swagger como flujo provisional para extraer, corregir y aprobar codigos hasta que exista un admin/backoffice.
 2. Mejorar el extractor con LLM o parser por fabricante si los manuales reales tienen tablas complejas.
 3. Definir formato de sync offline para que el frontend movil descargue solo codigos aprobados.
 4. Mantener revision humana antes de publicar codigos al tecnico.
