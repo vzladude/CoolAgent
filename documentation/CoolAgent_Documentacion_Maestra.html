@@ -1,0 +1,962 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CoolAgent - Documentacion Maestra</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f7f8;
+      --paper: #ffffff;
+      --ink: #1e2a32;
+      --muted: #5c6b75;
+      --line: #d8e0e5;
+      --accent: #0f7285;
+      --accent-dark: #084b58;
+      --soft: #e8f5f7;
+      --warn: #fff7df;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.55;
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+      gap: 28px;
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 28px;
+    }
+    aside {
+      position: sticky;
+      top: 20px;
+      align-self: start;
+      max-height: calc(100vh - 40px);
+      overflow: auto;
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 18px;
+    }
+    aside h2 {
+      margin: 0 0 10px;
+      font-size: 15px;
+      color: var(--accent-dark);
+    }
+    aside a {
+      display: block;
+      padding: 7px 0;
+      color: var(--muted);
+      text-decoration: none;
+      border-bottom: 1px solid #edf1f3;
+      font-size: 13px;
+    }
+    aside a:hover { color: var(--accent); }
+    main {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 34px;
+      box-shadow: 0 18px 50px rgba(22, 38, 47, 0.08);
+    }
+    h1 {
+      margin: 0;
+      font-size: 42px;
+      line-height: 1.05;
+      color: var(--accent-dark);
+      letter-spacing: 0;
+    }
+    .subtitle {
+      margin: 8px 0 0;
+      font-size: 20px;
+      color: var(--ink);
+      font-weight: 700;
+    }
+    .lede {
+      margin: 4px 0 20px;
+      color: var(--muted);
+      font-size: 15px;
+    }
+    .notice {
+      margin: 22px 0 28px;
+      padding: 16px 18px;
+      border-left: 5px solid var(--accent);
+      background: var(--soft);
+      border-radius: 10px;
+    }
+    .notice strong { color: var(--accent-dark); }
+    h2 {
+      margin: 34px 0 12px;
+      padding-top: 8px;
+      border-top: 1px solid var(--line);
+      font-size: 24px;
+      color: var(--accent-dark);
+    }
+    h3 {
+      margin: 24px 0 10px;
+      font-size: 18px;
+      color: var(--accent);
+    }
+    p { margin: 10px 0; }
+    ul, ol { margin: 10px 0 18px 24px; padding: 0; }
+    li { margin: 6px 0; }
+    .table-wrap { overflow-x: auto; margin: 16px 0 24px; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1px solid var(--line);
+      font-size: 14px;
+      background: #fff;
+    }
+    th {
+      background: var(--accent-dark);
+      color: #fff;
+      text-align: left;
+      padding: 10px 12px;
+      vertical-align: top;
+      font-weight: 700;
+    }
+    td {
+      border-top: 1px solid var(--line);
+      padding: 10px 12px;
+      vertical-align: top;
+    }
+    tr:nth-child(even) td { background: #fbfcfd; }
+    code {
+      background: #edf3f5;
+      border: 1px solid #d8e4e8;
+      padding: 1px 5px;
+      border-radius: 5px;
+      font-family: Consolas, 'Courier New', monospace;
+      font-size: 0.95em;
+    }
+    @media (max-width: 900px) {
+      .layout { display: block; padding: 14px; }
+      aside { position: static; max-height: none; margin-bottom: 16px; }
+      main { padding: 22px; }
+      h1 { font-size: 34px; }
+    }
+    @media print {
+      body { background: #fff; }
+      .layout { display: block; max-width: none; padding: 0; }
+      aside { display: none; }
+      main { border: 0; box-shadow: none; padding: 0; }
+      h2 { page-break-after: avoid; }
+      table { page-break-inside: auto; }
+      tr { page-break-inside: avoid; page-break-after: auto; }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside aria-label="Indice de secciones">
+      <h2>Indice</h2>
+      <a href="#1-vision-del-producto">1. Vision del producto</a>
+<a href="#2-estado-real-del-proyecto">2. Estado real del proyecto</a>
+<a href="#3-arquitectura-actual-local">3. Arquitectura actual local</a>
+<a href="#4-arquitectura-objetivo-de-produccion">4. Arquitectura objetivo de produccion</a>
+<a href="#5-modulos-del-producto">5. Modulos del producto</a>
+<a href="#6-inventario-de-apis-actuales">6. Inventario de APIs actuales</a>
+<a href="#7-roadmap-actualizado">7. Roadmap actualizado</a>
+<a href="#8-proximo-paso-recomendado">8. Proximo paso recomendado</a>
+<a href="#9-indice-de-documentos-existentes">9. Indice de documentos existentes</a>
+<a href="#10-reglas-de-mantenimiento-documental">10. Reglas de mantenimiento documental</a>
+<a href="#11-cierre-de-fase-a">11. Cierre de Fase A</a>
+<a href="#11-1-que-resuelve-alembic">11.1 Que resuelve Alembic</a>
+<a href="#11-2-como-se-valida-fase-a">11.2 Como se valida Fase A</a>
+<a href="#11-3-base-local-existente-y-alembic">11.3 Base local existente y Alembic</a>
+<a href="#12-fase-b0-guardrails-del-asistente">12. Fase B0: Guardrails del asistente</a>
+<a href="#12-1-relacion-con-fase-b">12.1 Relacion con Fase B</a>
+<a href="#13-fase-b-uso-tokens-y-cache-exacto">13. Fase B: uso, tokens y cache exacto</a>
+<a href="#14-fase-c-streaming-websocket">14. Fase C: streaming WebSocket</a>
+<a href="#15-fase-c2-technical-cases-y-contexto-robusto">15. Fase C2: Technical Cases y contexto robusto</a>
+<a href="#16-fase-d-codigos-de-error">16. Fase D: Codigos de error</a>
+<a href="#17-fase-e0-auth-y-registro-de-usuarios">17. Fase E0: Auth y registro de usuarios</a>
+<a href="#18-handoff-para-nuevo-chat">18. Handoff para nuevo chat</a>
+    </aside>
+    <main>
+      <div class="notice">
+        <strong>Regla vigente de documentacion:</strong> desde el 17 de mayo de 2026, la fuente viva de CoolAgent es este archivo HTML. Los DOCX existentes quedan como referencia historica y no deben usarse como documento maestro. En futuros cambios, actualizar primero este HTML.
+      </div>
+      <h1>CoolAgent</h1>
+<p class="subtitle">Documentacion Maestra del Proyecto</p>
+<p class="lede">Fuente central de verdad para arquitectura, estado real y roadmap</p>
+<div class="table-wrap"><table>
+<tr>
+<th>Fecha de corte</th>
+<th>3 de mayo de 2026</th>
+</tr>
+<tr>
+<td>Estado</td>
+<td>Documento maestro vivo</td>
+</tr>
+<tr>
+<td>Repositorio</td>
+<td>C:\Users\Goyo\Desktop\Repositorios\CoolAgent</td>
+</tr>
+<tr>
+<td>Politica</td>
+<td>Los DOCX existentes se conservan como referencia historica; el HTML maestro es la fuente viva</td>
+</tr>
+</table></div>
+<h2 id="1-vision-del-producto">1. Vision del producto</h2>
+<p>CoolAgent es una aplicacion movil para tecnicos de refrigeracion y HVAC/R. Su objetivo es reducir tiempo de diagnostico en campo mediante chat especializado, recuperacion de documentacion tecnica, diagnostico por imagen, calculadoras, codigos de error y capacidades offline.</p>
+<div class="table-wrap"><table>
+<tr>
+<td>Principio rector<br>Este documento es la fuente central de verdad. Si un documento historico contradice este archivo, prevalece este documento maestro hasta que se actualice de nuevo.</td>
+</tr>
+</table></div>
+<h2 id="2-estado-real-del-proyecto">2. Estado real del proyecto</h2>
+<div class="table-wrap"><table>
+<tr>
+<th>Area</th>
+<th>Estado actual al 03/05/2026</th>
+</tr>
+<tr>
+<td>Backend base</td>
+<td>Implementado: FastAPI, Docker Compose, PostgreSQL/pgvector, Redis, MinIO y provider Claude.</td>
+</tr>
+<tr>
+<td>RAG</td>
+<td>Fase A cerrada: ingesta, embeddings locales, busqueda pgvector, chat con contexto, glosario, Alembic y tests robustos.</td>
+</tr>
+<tr>
+<td>Chat</td>
+<td>Implementado con TechnicalCase/casos tecnicos, provider Claude, prompt de refrigeracion general, DomainGuard, RAG, cache exacto, tracking de uso/tokens, streaming WebSocket y compactacion de contexto.</td>
+</tr>
+<tr>
+<td>Vision</td>
+<td>Endpoint basico implementado para analisis de imagen con Claude Vision; faltan hardening, persistencia y tests.</td>
+</tr>
+<tr>
+<td>Codigos de error</td>
+<td>Implementado como indice estructurado derivado de Knowledge: busqueda/listado, extraccion desde documentos RAG, trazabilidad a documento/chunk y revision antes de publicar. Pendiente: validar extractor con un manual real de codigos de error cuando el documento este disponible.</td>
+</tr>
+<tr>
+<td>Frontend</td>
+<td>MVP mobile iniciado en frontend/: Expo/React Native con navegacion, mock data, casos/chat y codigos conectados a API con fallback.</td>
+</tr>
+<tr>
+<td>Auth, roles y rate limiting</td>
+<td>Base implementada: registro, login, JWT bearer y /me. Pendiente: proteger endpoints existentes, asociar recursos a user_id, verificacion de email, recuperacion de password, roles/admin y monetizacion.</td>
+</tr>
+<tr>
+<td>Documentacion</td>
+<td>Existe como DOCX historico; habia desalineacion con el estado real del codigo.</td>
+</tr>
+<tr>
+<td>Uso, tokens y cache</td>
+<td>Parcial implementado en Fase B y C2: usage_events, endpoint de resumen, cache exacto con Redis, costos estimados configurables, ahorro estimado por cache y llaves ligadas al caso tecnico/contexto. Queda pendiente cache semantico solo si el ahorro real lo justifica.</td>
+</tr>
+</table></div>
+<div class="table-wrap"><table>
+<tr>
+<td>Validacion reciente del RAG<br>Se probo localmente con un documento de prueba Carrier 38AKS. La busqueda semantica recupero el chunk correcto y Claude respondio usando esa documentacion. Modelo usado: claude-haiku-4-5-20251001. Embeddings locales: all-MiniLM-L6-v2, 384 dimensiones.</td>
+</tr>
+</table></div>
+<h2 id="3-arquitectura-actual-local">3. Arquitectura actual local</h2>
+<ul>
+<li>API: FastAPI con SQLAlchemy async y routers versionados bajo /api/v1.</li>
+<li>Base de datos: PostgreSQL 16 con extension pgvector para chunks semanticos.</li>
+<li>Cache/infra local: Redis y MinIO levantados por Docker Compose.</li>
+<li>LLM desarrollo: Claude API directa mediante ClaudeProvider.</li>
+<li>Embeddings RAG: sentence-transformers local dentro de la API, independiente del proveedor de chat.</li>
+<li>RAG: documentos -&gt; chunking -&gt; embeddings -&gt; knowledge_chunks -&gt; retrieval -&gt; prompt injection.</li>
+</ul>
+<div class="table-wrap"><table>
+<tr>
+<td>Aclaracion importante<br>Ollama ya no debe tratarse como entorno local principal en la documentacion actual. El codigo conserva OllamaProvider como alternativa futura, pero el entorno probado usa Claude para chat/vision y embeddings locales para RAG.</td>
+</tr>
+</table></div>
+<h2 id="4-arquitectura-objetivo-de-produccion">4. Arquitectura objetivo de produccion</h2>
+<ul>
+<li>Mantener Strategy Pattern para cambiar proveedores sin reescribir logica de negocio.</li>
+<li>Produccion prevista en AWS: ECS/Fargate o equivalente, RDS PostgreSQL con pgvector, ElastiCache Redis, S3 y Bedrock/Claude segun costo/calidad.</li>
+<li>Autenticacion prevista con Cognito/JWT y roles technician/admin.</li>
+<li>Migraciones reales con Alembic antes de promover cambios de esquema.</li>
+<li>Observabilidad pendiente: logs estructurados, metricas de costo/tokens, errores de proveedor AI y tiempos de retrieval.</li>
+</ul>
+<h2 id="5-modulos-del-producto">5. Modulos del producto</h2>
+<div class="table-wrap"><table>
+<tr>
+<th>Modulo</th>
+<th>Estado</th>
+<th>Notas</th>
+</tr>
+<tr>
+<td>RAG / Knowledge Base</td>
+<td>Completado probado</td>
+<td>Endpoints para upload PDF/text, listado, busqueda, glosario y borrado. Alembic y tests robustos quedan como base oficial.</td>
+</tr>
+<tr>
+<td>Chat refrigeracion general</td>
+<td>Completado funcional</td>
+<td>El dominio oficial es TechnicalCase: lista de casos, mensajes por caso, metadata opcional, streaming, RAG, DomainGuard, cache exacto y compactacion de contexto. Falta UX final, auth y cuotas ligadas a usuarios.</td>
+</tr>
+<tr>
+<td>Diagnostico por imagen</td>
+<td>Parcial</td>
+<td>Endpoint y servicio basico listos; falta validacion de imagen, persistencia y pruebas reales.</td>
+</tr>
+<tr>
+<td>Codigos de error</td>
+<td>Implementado derivado de Knowledge</td>
+<td>Busca por codigo, fabricante y modelo; extrae candidatos desde documentos RAG y solo muestra codigos aprobados por defecto. Cada codigo conserva fuente, documento, chunk, excerpt y estado de revision.</td>
+</tr>
+<tr>
+<td>Frontend movil</td>
+<td>MVP scaffold implementado</td>
+<td>App Expo/React Native en frontend/. Navegacion mobile, screens con mock data y adapters para API. No incluye upload RAG desde mobile.</td>
+</tr>
+<tr>
+<td>Offline</td>
+<td>Pendiente</td>
+<td>Planificado para SQLite/local cache en app movil.</td>
+</tr>
+<tr>
+<td>Auth y roles</td>
+<td>Base implementada</td>
+<td>Registro/login con JWT listo en backend. Aun no se fuerza autenticacion en chat/RAG/codigos para no romper desarrollo local; ownership y roles quedan pendientes.</td>
+</tr>
+<tr>
+<td>Infra/CI/CD</td>
+<td>Pendiente parcial</td>
+<td>Docker local existe; AWS/CI/CD aun como estructura vacia.</td>
+</tr>
+<tr>
+<td>Uso, tokens y cache</td>
+<td>Parcial implementado</td>
+<td>UsageEvent registra tokens, costos estimados, ahorro por cache, cache hits/misses, bloqueos de dominio y compactaciones de contexto. Redis cachea respuestas exactas con TTL e invalidacion por version de prompt, caso tecnico, resumen/contexto, RAG y huella global de la knowledge base.</td>
+</tr>
+</table></div>
+<h2 id="6-inventario-de-apis-actuales">6. Inventario de APIs actuales</h2>
+<div class="table-wrap"><table>
+<tr>
+<th>Area</th>
+<th>Metodo y ruta</th>
+<th>Estado</th>
+</tr>
+<tr>
+<td>Health</td>
+<td>GET /health</td>
+<td>Actual</td>
+</tr>
+<tr>
+<td>Health</td>
+<td>GET /health/db</td>
+<td>Actual</td>
+</tr>
+<tr>
+<td>Chat</td>
+<td>POST /api/v1/chat/cases</td>
+<td>Actual oficial: crea caso tecnico con metadata opcional</td>
+</tr>
+<tr>
+<td>Chat</td>
+<td>POST /api/v1/chat/cases/{case_id}/messages</td>
+<td>Actual oficial con DomainGuard, contexto de caso, RAG y cache exacto</td>
+</tr>
+<tr>
+<td>Knowledge</td>
+<td>POST /api/v1/knowledge/upload/pdf</td>
+<td>Actual</td>
+</tr>
+<tr>
+<td>Knowledge</td>
+<td>POST /api/v1/knowledge/upload/text</td>
+<td>Actual</td>
+</tr>
+<tr>
+<td>Knowledge</td>
+<td>GET /api/v1/knowledge/documents</td>
+<td>Actual</td>
+</tr>
+<tr>
+<td>Knowledge</td>
+<td>DELETE /api/v1/knowledge/documents/{document_id}</td>
+<td>Actual</td>
+</tr>
+<tr>
+<td>Knowledge</td>
+<td>POST /api/v1/knowledge/search</td>
+<td>Actual</td>
+</tr>
+<tr>
+<td>Diagnosis</td>
+<td>POST /api/v1/diagnosis/analyze</td>
+<td>Parcial</td>
+</tr>
+<tr>
+<td>Error Codes</td>
+<td>GET /api/v1/error-codes/</td>
+<td>Actual: busqueda real por codigo, fabricante y modelo</td>
+</tr>
+<tr>
+<td>Error Codes</td>
+<td>GET /api/v1/error-codes/manufacturers</td>
+<td>Actual: lista fabricantes con conteos reales</td>
+</tr>
+<tr>
+<td>Docs</td>
+<td>GET /api/v1/docs</td>
+<td>Actual Swagger</td>
+</tr>
+<tr>
+<td>Usage</td>
+<td>GET /api/v1/usage/summary</td>
+<td>Actual: resume tokens, cache hits/misses y bloqueos de dominio.</td>
+</tr>
+<tr>
+<td>Chat</td>
+<td>WebSocket /api/v1/chat/cases/{case_id}/messages/stream</td>
+<td>Actual oficial: streaming de respuesta con eventos delta/done/error</td>
+</tr>
+<tr>
+<td>Chat</td>
+<td>GET /api/v1/chat/cases</td>
+<td>Actual oficial: lista casos con metadata y last_message_at</td>
+</tr>
+<tr>
+<td>Chat</td>
+<td>GET /api/v1/chat/cases/{case_id}</td>
+<td>Actual oficial: detalle de caso tecnico</td>
+</tr>
+<tr>
+<td>Chat</td>
+<td>PATCH /api/v1/chat/cases/{case_id}</td>
+<td>Actual oficial: actualiza titulo, fabricante, modelo, categoria o estado</td>
+</tr>
+<tr>
+<td>Chat</td>
+<td>GET /api/v1/chat/cases/{case_id}/messages</td>
+<td>Actual oficial: mensajes paginados por caso</td>
+</tr>
+<tr>
+<td>Chat legacy</td>
+<td>POST /api/v1/chat/conversations</td>
+<td>Alias temporal de /cases; deprecado internamente</td>
+</tr>
+<tr>
+<td>Chat legacy</td>
+<td>POST /api/v1/chat/conversations/{conversation_id}/messages</td>
+<td>Alias temporal hacia /cases/{case_id}/messages</td>
+</tr>
+<tr>
+<td>Chat legacy</td>
+<td>WebSocket /api/v1/chat/conversations/{conversation_id}/messages/stream</td>
+<td>Alias temporal hacia streaming por caso</td>
+</tr>
+<tr>
+<td>Knowledge</td>
+<td>GET /api/v1/knowledge/glossary</td>
+<td>Actual: glosario de documentos RAG sin exponer chunks completos</td>
+</tr>
+<tr>
+<td>Error Codes</td>
+<td>POST /api/v1/error-codes/extract/from-document/{document_id}</td>
+<td>Actual: extrae candidatos desde un documento Knowledge y los deja pendientes por defecto</td>
+</tr>
+<tr>
+<td>Error Codes</td>
+<td>PATCH /api/v1/error-codes/{error_code_id}/review</td>
+<td>Actual: aprueba, rechaza o devuelve un codigo a revision</td>
+</tr>
+<tr>
+<td>Error Codes</td>
+<td>PATCH /api/v1/error-codes/{error_code_id}</td>
+<td>Actual: corrige candidatos antes de aprobarlos para la busqueda del tecnico</td>
+</tr>
+<tr>
+<td>Auth</td>
+<td>POST /api/v1/auth/register</td>
+<td>Actual: crea usuario local con email/password</td>
+</tr>
+<tr>
+<td>Auth</td>
+<td>POST /api/v1/auth/login</td>
+<td>Actual: devuelve JWT bearer y perfil del usuario</td>
+</tr>
+<tr>
+<td>Auth</td>
+<td>GET /api/v1/auth/me</td>
+<td>Actual: devuelve perfil usando token bearer</td>
+</tr>
+</table></div>
+<h2 id="7-roadmap-actualizado">7. Roadmap actualizado</h2>
+<div class="table-wrap"><table>
+<tr>
+<th>Prioridad</th>
+<th>Fase</th>
+<th>Decision</th>
+</tr>
+<tr>
+<td>1</td>
+<td>Fase A cerrada</td>
+<td>RAG protegido: Alembic, tests, glosario y datos locales conservados.</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Fase B0 cerrada</td>
+<td>Prompt y guardrails de refrigeracion general antes de cachear respuestas.</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Fase B en progreso</td>
+<td>Implementado tracking de uso/tokens, cache exacto con Redis, invalidacion por knowledge base, costos configurables y compatibilidad con casos tecnicos. Pendiente cache semantico solo si el ahorro real lo justifica; rate limiting queda para usuarios/monetizacion.</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Fase C/C2 cerradas</td>
+<td>Streaming WebSocket y TechnicalCase implementados. El chat ya se organiza por casos tecnicos con compactacion de contexto.</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Fase D implementada</td>
+<td>Codigos de error quedan como indice derivado de Knowledge: extraccion desde documentos RAG, correccion manual, revision humana, trazabilidad a fuente y busqueda mobile solo de aprobados.</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Frontend MVP</td>
+<td>Continuar wiring incremental del MVP mobile y crear endpoints nuevos solo cuando una pantalla real los necesite.</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Fase E0 base implementada</td>
+<td>Auth backend listo: registro, login, JWT y /me. Pendiente ownership de datos, roles, password reset y verificacion de email.</td>
+</tr>
+</table></div>
+<h2 id="8-proximo-paso-recomendado">8. Proximo paso recomendado</h2>
+<p>Con Fase A, B0, B, C, C2 y Fase D base cerradas, el siguiente paso recomendado es usar el flujo provisional por Swagger para alimentar codigos desde documentos reales y continuar el frontend MVP con wiring incremental.</p>
+<ol>
+<li>Si se inicia frontend, la pantalla base debe ser lista de casos tecnicos + chat activo + panel editable de metadata.</li>
+<li>Para Fase D, cuando este disponible el manual real, subirlo a Knowledge, extraer candidatos, corregir datos tecnicos si hace falta, comparar contra el documento fuente, revisar/aprobar y publicar solo codigos confiables.</li>
+<li>Mantener /conversations solo como alias temporal; la API oficial nueva es /cases.</li>
+<li>Rate limiting, cuotas, usuarios y monetizacion siguen pendientes para una fase futura.</li>
+</ol>
+<div class="table-wrap"><table>
+<tr>
+<td>Recomendacion de secuencia | La integracion completa de codigos queda pendiente hasta probar un manual real. Mientras tanto, avanzar con auth mobile: pantallas de registro/login, almacenamiento seguro del token y luego asociar casos tecnicos al usuario autenticado.</td>
+</tr>
+</table></div>
+<h2 id="9-indice-de-documentos-existentes">9. Indice de documentos existentes</h2>
+<div class="table-wrap"><table>
+<tr>
+<th>Documento</th>
+<th>Uso recomendado</th>
+<th>Estado</th>
+</tr>
+<tr>
+<td>CoolAgent_Documentacion_Maestra.html</td>
+<td>Fuente central de verdad vigente.</td>
+<td>Actual</td>
+</tr>
+<tr>
+<td>CoolAgent_Actualizacion_Arquitectura_AI_v1.1.docx</td>
+<td>Referencia sobre cambio a Claude; mantener como antecedente.</td>
+<td>Parcial actual</td>
+</tr>
+<tr>
+<td>CoolAgent_Plan_de_Proyecto.docx</td>
+<td>Vision y alcance original del producto.</td>
+<td>Historico</td>
+</tr>
+<tr>
+<td>CoolAgent_Requerimientos_Backend.docx</td>
+<td>Requerimientos amplios; contiene partes aspiracionales no implementadas.</td>
+<td>Parcial historico</td>
+</tr>
+<tr>
+<td>CoolAgent_Requerimientos_Frontend.docx</td>
+<td>Parece duplicar plan general; no usar como especificacion frontend vigente.</td>
+<td>Historico</td>
+</tr>
+<tr>
+<td>CoolAgent_Requerimientos_IA.docx</td>
+<td>Referencia de intencion AI/RAG; actualizar criterios de embeddings y proveedor local.</td>
+<td>Parcial historico</td>
+</tr>
+</table></div>
+<h2 id="10-reglas-de-mantenimiento-documental">10. Reglas de mantenimiento documental</h2>
+<ul>
+<li>Actualizar este HTML maestro al cerrar cada milestone tecnico.</li>
+<li>Usar plans/ solo para planes temporales de la tarea activa; no como documentacion permanente.</li>
+<li>Si se cambia una API publica, actualizar el inventario de APIs en este documento.</li>
+<li>Si se cambia arquitectura AI, actualizar la seccion de arquitectura local y el indice de documentos historicos.</li>
+<li>Evitar que documentos historicos vuelvan a ser fuente de verdad sin revisarlos primero.</li>
+</ul>
+<h2 id="11-cierre-de-fase-a">11. Cierre de Fase A</h2>
+<p>Fase A no implica pasar a staging o produccion ahora. El objetivo es dejar el RAG con bases tecnicas sanas para que, cuando llegue ese momento, el cambio sea controlado y no dependa de memoria, parches manuales o create_all().</p>
+<div class="table-wrap"><table>
+<tr>
+<td>Decision tecnica: Alembic<br>Alembic sera el historial oficial de cambios de base de datos. Cada cambio de schema relevante quedara registrado en una migracion versionada que puede ejecutarse localmente con alembic upgrade head. Esto no significa que se vaya a staging/produccion pronto; significa que el camino queda preparado.</td>
+</tr>
+</table></div>
+<div class="table-wrap"><table>
+<tr>
+<th>Componente</th>
+<th>Decision vigente</th>
+</tr>
+<tr>
+<td>Migraciones</td>
+<td>Alembic en backend/ con baseline inicial para extensiones, tablas RAG, vector(384), indices por metadata e indice vectorial.</td>
+</tr>
+<tr>
+<td>Tests</td>
+<td>Suite unit + integration. Los tests no llaman a Claude real por defecto y usan providers fake/mocks.</td>
+</tr>
+<tr>
+<td>Base de integracion</td>
+<td>coolagent_test separada de la base local de trabajo para no mezclar datos reales con pruebas.</td>
+</tr>
+<tr>
+<td>Glosario RAG</td>
+<td>Endpoint /api/v1/knowledge/glossary alimentado por KnowledgeDocument; muestra procedencia y metadata sin exponer chunks completos.</td>
+</tr>
+<tr>
+<td>Desarrollo local</td>
+<td>Se mantiene simple. Alembic queda listo como base oficial, sin obligar todavia a crear pipeline de staging/produccion.</td>
+</tr>
+</table></div>
+<h3 id="11-1-que-resuelve-alembic">11.1 Que resuelve Alembic</h3>
+<ul>
+<li>Evita perder el RAG cuando existan documentos reales y haya que cambiar el schema.</li>
+<li>Permite saber exactamente que version de base de datos espera el codigo.</li>
+<li>Hace repetible crear una base desde cero para tests, otra maquina o un futuro staging.</li>
+<li>Reduce el riesgo de depender de create_all(), que crea tablas nuevas pero no migra tablas existentes.</li>
+</ul>
+<h3 id="11-2-como-se-valida-fase-a">11.2 Como se valida Fase A</h3>
+<ul>
+<li>Unit tests para prompt RAG, ingesta, contexto, PDF sin texto y chat con Claude mockeado.</li>
+<li>Integration tests con PostgreSQL/pgvector real para alembic upgrade head, vector(384), ingesta, busqueda, filtros, cascada de borrado y glosario.</li>
+<li>El glosario sirve como catalogo vivo de fuentes usadas por el RAG.</li>
+</ul>
+<h3 id="11-3-base-local-existente-y-alembic">11.3 Base local existente y Alembic</h3>
+<div class="table-wrap"><table>
+<tr>
+<td>Cuidado con bases ya creadas
+La base local puede haber tenido tablas creadas antes de Alembic. Para C2 se agrego una migracion de rescate 20260501_0005 que une conversaciones legacy dentro de technical_cases, repara llaves foraneas y conserva mensajes/RAG. A futuro, los cambios de schema deben entrar primero por Alembic.</td>
+</tr>
+</table></div>
+<p>Referencia tecnica: backend/alembic/README.md contiene los comandos recomendados para base nueva, base local existente y tests con coolagent_test.</p>
+<h2 id="12-fase-b0-guardrails-del-asistente">12. Fase B0: Guardrails del asistente</h2>
+<p>Antes de implementar cache/costos, CoolAgent define una politica estricta de dominio para que el asistente responda como tecnico de refrigeracion general. Esto evita guardar en cache respuestas fuera de alcance o contrarias al rol del producto.</p>
+<div class="table-wrap"><table>
+<tr>
+<td>Dominio correcto<br>CoolAgent cubre refrigeracion general y climatizacion aplicada: neveras, congeladores, aires acondicionados residenciales y comerciales, refrigeracion comercial e industrial, camaras frigorificas, chillers, bombas de calor, refrigerantes, electricidad aplicada, controles, seguridad, mantenimiento y diagnostico.</td>
+</tr>
+</table></div>
+<div class="table-wrap"><table>
+<tr>
+<th>Elemento</th>
+<th>Decision</th>
+</tr>
+<tr>
+<td>System prompt</td>
+<td>Rol actualizado a asistente tecnico de refrigeracion general para tecnicos de campo.</td>
+</tr>
+<tr>
+<td>DomainGuard</td>
+<td>Bloquea consultas claramente fuera de dominio antes de llamar a RAG o Claude.</td>
+</tr>
+<tr>
+<td>Temas auxiliares</td>
+<td>Electricidad, seguridad, herramientas, normativa y mediciones se permiten si estan conectadas al trabajo tecnico.</td>
+</tr>
+<tr>
+<td>Prompt policy version</td>
+<td>Se define PROMPT_POLICY_VERSION=refrigeration-general-v1 para invalidar cache futuro si cambia la politica.</td>
+</tr>
+<tr>
+<td>Tests</td>
+<td>Casos permitidos, rechazados y prompt injection se cubren sin llamar a Claude real.</td>
+</tr>
+</table></div>
+<h3 id="12-1-relacion-con-fase-b">12.1 Relacion con Fase B</h3>
+<ul>
+<li>Fase B0 debe quedar antes de cache/costos.</li>
+<li>El cache futuro debe incluir la version de politica del prompt en la llave o metadata.</li>
+<li>Si cambia el comportamiento del asistente, respuestas cacheadas con politicas anteriores no deben reutilizarse.</li>
+</ul>
+<h2 id="13-fase-b-uso-tokens-y-cache-exacto">13. Fase B: uso, tokens y cache exacto</h2>
+<p>Esta fase empieza a reducir costo y latencia sin cambiar el comportamiento principal del RAG. La prioridad fue medir uso y cachear solo respuestas exactas cuando la pregunta, el proveedor, el modelo, la version del prompt y el contexto RAG coinciden.</p>
+<div class="table-wrap"><table>
+<tr>
+<th>Elemento</th>
+<th>Decision vigente</th>
+</tr>
+<tr>
+<td>Migracion</td>
+<td>Alembic 20260501_0002 crea usage_events para registrar actividad de chat sin tocar knowledge_documents ni knowledge_chunks.</td>
+</tr>
+<tr>
+<td>Tracking</td>
+<td>Cada respuesta registra cache_status: miss cuando llama al provider, hit cuando responde desde Redis y blocked cuando DomainGuard corta la consulta.</td>
+</tr>
+<tr>
+<td>Endpoint</td>
+<td>GET /api/v1/usage/summary muestra eventos, tokens de entrada/salida, cache hits/misses y bloqueos de dominio.</td>
+</tr>
+<tr>
+<td>Cache exacto</td>
+<td>Redis guarda respuestas por TTL. La llave incluye provider, modelo, PROMPT_POLICY_VERSION, pregunta normalizada, technical_case_id, fingerprint del resumen/contexto, ultimos mensajes, hash del contexto RAG y huella global de la knowledge base.</td>
+</tr>
+<tr>
+<td>Proteccion del RAG</td>
+<td>Si cambia el contexto recuperado o cambia la knowledge base por ingesta/borrado de documentos, cambia la llave y no se reutiliza una respuesta vieja.</td>
+</tr>
+<tr>
+<td>Costos</td>
+<td>No se fija precio por defecto para evitar numeros obsoletos. El endpoint queda listo para estimar costos cuando se configuren precios por millon de tokens.</td>
+</tr>
+<tr>
+<td>Pendiente de Fase B</td>
+<td>Cache semantico se pospone hasta comprobar ahorro real suficiente. Tambien quedan pendientes autenticacion, usuarios, cuotas/rate limiting y costo por usuario para monetizacion.</td>
+</tr>
+<tr>
+<td>Huella knowledge base</td>
+<td>RAGService.knowledge_fingerprint() resume conteos y fechas maximas de documentos/chunks. Cambia al ingerir o borrar material RAG y evita reutilizar cache viejo.</td>
+</tr>
+<tr>
+<td>Costos estimados</td>
+<td>Alembic 20260501_0003 agrega estimated_cost_usd por evento. Los costos son aproximados y dependen de precios configurados, no de facturacion oficial.</td>
+</tr>
+<tr>
+<td>Ahorro por cache</td>
+<td>Los cache hits registran cache_saved_tokens_* y cache_saved_cost_usd usando los tokens de la respuesta original cacheada.</td>
+</tr>
+<tr>
+<td>Filtros usage</td>
+<td>GET /api/v1/usage/summary acepta technical_case_id, conversation_id legacy, date_from, date_to y model para revisar uso por caso tecnico, rango de tiempo o modelo.</td>
+</tr>
+<tr>
+<td>Configuracion de precios</td>
+<td>Se puede usar USAGE_PRICING_JSON para proveedor/modelo o variables simples USAGE_INPUT_COST_PER_MILLION_USD y USAGE_OUTPUT_COST_PER_MILLION_USD.</td>
+</tr>
+<tr>
+<td>Sin cache semantico</td>
+<td>Se mantiene fuera por ahora. Solo se evaluara si el ahorro real justifica el riesgo y la complejidad.</td>
+</tr>
+<tr>
+<td>Rate limiting pendiente</td>
+<td>No se implementa ahora. Se debe disenar mas adelante junto con autenticacion, usuarios, planes, costo por usuario y estrategia de monetizacion para evitar rehacerlo.</td>
+</tr>
+<tr>
+<td>Alcance futuro de cuotas</td>
+<td>Cuando se retome, deberia cubrir chat, vision, ingesta RAG y busqueda con contadores Redis, respuesta 429 y reportes por usuario/modelo/conversacion.</td>
+</tr>
+<tr>
+<td>Compactacion de contexto</td>
+<td>Las llamadas de resumen automatico se registran como event_type=&quot;context_compaction&quot; para separar ese costo del chat normal.</td>
+</tr>
+</table></div>
+<p>Nota para futuro: esta base no significa que se vaya a staging o produccion pronto. Solo deja preparado el camino para crecer con menos riesgo cuando llegue ese momento.</p>
+<h2 id="14-fase-c-streaming-websocket">14. Fase C: streaming WebSocket</h2>
+<p>Fase C agrega streaming de chat para mejorar la experiencia del usuario. En vez de esperar la respuesta completa, el backend envia fragmentos de texto mientras el provider genera la respuesta.</p>
+<div class="table-wrap"><table>
+<tr>
+<th>Elemento</th>
+<th>Decision vigente</th>
+</tr>
+<tr>
+<td>Endpoint</td>
+<td>WebSocket /api/v1/chat/cases/{case_id}/messages/stream. El endpoint /conversations/{conversation_id}/messages/stream queda como alias temporal.</td>
+</tr>
+<tr>
+<td>Entrada</td>
+<td>El cliente envia un JSON inicial con content usando el mismo schema ChatMessageRequest.</td>
+</tr>
+<tr>
+<td>Eventos</td>
+<td>delta envia fragmentos de texto, done envia metadata final y error reporta payload invalido o caso tecnico no encontrado.</td>
+</tr>
+<tr>
+<td>Orden del flujo</td>
+<td>DomainGuard -&gt; contexto del caso -&gt; RAG -&gt; cache exacto -&gt; provider stream -&gt; persistencia -&gt; usage/costos.</td>
+</tr>
+<tr>
+<td>Cache</td>
+<td>Si hay cache hit, responde por WebSocket sin llamar a Claude y registra ahorro estimado.</td>
+</tr>
+<tr>
+<td>Persistencia</td>
+<td>Al terminar el stream se guarda el mensaje completo del asistente, se actualiza cache y se registra usage.</td>
+</tr>
+<tr>
+<td>Tokens</td>
+<td>ClaudeProvider.chat_stream captura metadata final de tokens cuando Anthropic la envia. Si un provider no la envia, tokens quedan en cero para evitar inventar costos.</td>
+</tr>
+<tr>
+<td>Tests</td>
+<td>Cobertura unit para servicio y router WebSocket sin llamar a Claude real.</td>
+</tr>
+<tr>
+<td>TechnicalCase</td>
+<td>El stream pertenece a un caso tecnico especifico; no debe modelarse como chat central infinito.</td>
+</tr>
+</table></div>
+<h2 id="15-fase-c2-technical-cases-y-contexto-robusto">15. Fase C2: Technical Cases y contexto robusto</h2>
+<p>Fase C2 reorganiza el chat alrededor de casos tecnicos. Un TechnicalCase representa un equipo, falla o trabajo especifico; dentro de ese caso viven los mensajes, el resumen tecnico y la metadata opcional. Esto evita depender de un chat infinito y prepara una experiencia de producto mas parecida a tickets/casos de soporte y field service.</p>
+<div class="table-wrap"><table>
+<tr>
+<th>Elemento</th>
+<th>Decision vigente</th>
+</tr>
+<tr>
+<td>Dominio oficial</td>
+<td>TechnicalCase reemplaza a Conversation en el backend. Conversation queda como alias legacy para compatibilidad temporal.</td>
+</tr>
+<tr>
+<td>Schema</td>
+<td>Alembic 20260501_0004 renombra el dominio y agrega metadata/resumen. Alembic 20260501_0005 repara bases locales donde coexistian conversations y technical_cases.</td>
+</tr>
+<tr>
+<td>Datos conservados</td>
+<td>Validacion local: 3 casos migrados, 4 mensajes conservados, 1 documento RAG y 1 chunk RAG intactos.</td>
+</tr>
+<tr>
+<td>API oficial</td>
+<td>Usar /api/v1/chat/cases y /api/v1/chat/cases/{case_id}/messages. /conversations queda deprecado internamente.</td>
+</tr>
+<tr>
+<td>Contexto</td>
+<td>El prompt se arma con system prompt, resumen tecnico del caso, ultimos mensajes completos, contexto RAG y mensaje actual del usuario.</td>
+</tr>
+<tr>
+<td>Compactacion</td>
+<td>Se compacta si hay mas de 30 mensajes no resumidos o mas de 16,000 tokens estimados. Siempre se conservan los ultimos 10 mensajes completos.</td>
+</tr>
+<tr>
+<td>Fallback</td>
+<td>Si Claude falla al resumir, el chat no se rompe: usa resumen existente, mensajes recientes y RAG.</td>
+</tr>
+<tr>
+<td>Cache</td>
+<td>La cache exacta incluye caso tecnico, fingerprint de resumen/contexto, ultimos mensajes, RAG, version del prompt y huella de knowledge base.</td>
+</tr>
+<tr>
+<td>Usage</td>
+<td>La compactacion se registra como context_compaction para entender costos de contexto por separado.</td>
+</tr>
+<tr>
+<td>Frontend</td>
+<td>UX recomendada: lista de casos tecnicos, chat activo con streaming y panel editable de metadata del caso.</td>
+</tr>
+<tr>
+<td>Tests</td>
+<td>Suite Docker verificada: 54 passed.</td>
+</tr>
+</table></div>
+<h2 id="16-fase-d-codigos-de-error">16. Fase D: Codigos de error</h2>
+<p>Fase D mantiene Knowledge como fuente de verdad. Los manuales, boletines y documentos cargados al RAG viven en knowledge_documents/knowledge_chunks; error_codes es un indice estructurado derivado de esos documentos para busqueda rapida, filtros por fabricante/modelo y modo offline futuro. Los codigos extraidos quedan pendientes de revision y pueden corregirse antes de aprobarse. Validacion pendiente: probar el flujo con un manual real de codigos de error cuando el documento sea entregado en los proximos dias.</p>
+<div class="table-wrap"><table>
+<tr>
+<th>Elemento</th>
+<th>Decision vigente</th>
+</tr>
+<tr>
+<td>Migracion</td>
+<td>Alembic 20260501_0006 agrega source/updated_at e indices. Alembic 20260502_0007 agrega trazabilidad a Knowledge y estado de revision.</td>
+</tr>
+<tr>
+<td>Busqueda</td>
+<td>GET /api/v1/error-codes/ filtra por query, code, manufacturer, model y review_status. Por defecto muestra solo approved.</td>
+</tr>
+<tr>
+<td>Fabricantes</td>
+<td>GET /api/v1/error-codes/manufacturers devuelve conteos filtrables por review_status; por defecto cuenta solo approved.</td>
+</tr>
+<tr>
+<td>Seed</td>
+<td>backend/scripts/seed_error_codes.py carga 8 fabricantes prioritarios de forma idempotente.</td>
+</tr>
+<tr>
+<td>Calidad de datos</td>
+<td>TRUSTED_ERROR_CODES queda vacio por defecto para no inventar datos tecnicos. Los codigos derivados de documentos entran como pending_review.</td>
+</tr>
+<tr>
+<td>Validacion local</td>
+<td>Base local actualizada a 20260502_0007 con RAG intacto. La migracion fue aplicada con alembic upgrade head.</td>
+</tr>
+<tr>
+<td>Tests</td>
+<td>Suite Docker verificada: 59 passed.</td>
+</tr>
+<tr>
+<td>Pendiente</td>
+<td>Probar con manual real de codigos de error cuando este disponible; comparar candidatos contra la fuente; usar Swagger como flujo provisional para extraer/corregir/aprobar; mejorar extractor con LLM/parser si los manuales reales lo requieren; definir sync offline mobile.</td>
+</tr>
+<tr>
+<td>Extraccion</td>
+<td>POST /api/v1/error-codes/extract/from-document/{document_id} crea candidatos desde Knowledge con source_document_id, source_chunk_id, source_excerpt, confidence y extraction_metadata.</td>
+</tr>
+<tr>
+<td>Revision</td>
+<td>PATCH /api/v1/error-codes/{error_code_id}/review permite approved, pending_review o rejected. La UX mobile debe consumir approved por defecto.</td>
+</tr>
+<tr>
+<td>Correccion</td>
+<td>PATCH /api/v1/error-codes/{error_code_id} permite corregir candidatos antes de aprobarlos: codigo, descripcion, modelo, severidad, causas, solucion, fuente, pagina y excerpt.</td>
+</tr>
+<tr>
+<td>Validacion pendiente</td>
+<td>El extractor paso tests automaticos, pero aun no se ha probado con un manual real de fabricante. No tratar el extractor simple como definitivo hasta validar codigos, paginas, excerpts y falsos positivos.</td>
+</tr>
+</table></div>
+<h2 id="17-fase-e0-auth-y-registro-de-usuarios">17. Fase E0: Auth y registro de usuarios</h2>
+<p>Se implemento una base de autenticacion backend para preparar CoolAgent para cuentas reales sin bloquear todavia el desarrollo local. La app ya puede registrar usuarios, iniciar sesion y consultar el perfil autenticado con JWT bearer.</p>
+<div class="table-wrap"><table>
+<tr>
+<th>Elemento</th>
+<th>Decision vigente</th>
+</tr>
+<tr>
+<td>Migracion</td>
+<td>Alembic 20260503_0008 crea users con email unico, password_hash, rol, estado activo/verificado y fechas.</td>
+</tr>
+<tr>
+<td>Endpoints</td>
+<td>POST /api/v1/auth/register, POST /api/v1/auth/login y GET /api/v1/auth/me.</td>
+</tr>
+<tr>
+<td>Password</td>
+<td>Hash con bcrypt + pre-hash SHA-256 para evitar el limite de 72 bytes de bcrypt y guardar passwords de forma segura.</td>
+</tr>
+<tr>
+<td>Tokens</td>
+<td>JWT HS256 con SECRET_KEY y expiracion configurable por ACCESS_TOKEN_EXPIRE_MINUTES.</td>
+</tr>
+<tr>
+<td>Alcance actual</td>
+<td>No se fuerza autenticacion en chat/RAG/codigos todavia para no romper desarrollo local.</td>
+</tr>
+<tr>
+<td>Pendiente</td>
+<td>Conectar mobile, guardar token de forma segura, asociar casos/usage a user_id, verificacion de email, password reset, roles/admin y monetizacion futura.</td>
+</tr>
+<tr>
+<td>Tests</td>
+<td>Suite Docker verificada: 64 passed.</td>
+</tr>
+</table></div>
+<h2 id="18-handoff-para-nuevo-chat">18. Handoff para nuevo chat</h2>
+<p>Estado al 17 de mayo de 2026: la ingesta local del RAG desde C:\Users\Goyo\Desktop\Data Rag queda completada para los PDFs con texto extraible. Se cargaron 28 documentos nuevos; la knowledge base quedo con 30 documentos en total contando los 2 previos.</p>
+<ul>
+<li>Verificacion rapida: 28/28 documentos nuevos respondieron como primer resultado en /api/v1/knowledge/search usando una pregunta representativa por documento.</li>
+<li>El endpoint /api/v1/knowledge/glossary confirma que la metadata de ingesta esta guardada: titulo, source, tipo, fabricante, modelo, categoria, chunks, paginas, caracteres y fecha.</li>
+<li>El documento CODIGO_DE_ERROS_GERAL_DE_TODAS_AS_MAQUINAS_E_MARCAS.pdf no fue ingerido porque no tiene texto extraible. Queda pendiente OCR para una fase futura si se decide soportar documentos escaneados.</li>
+<li>Se corrigio la ingesta para limpiar caracteres de control invalidos encontrados en algunos PDFs antes de guardar chunks en PostgreSQL. Tests backend: 43 passed, 22 skipped.</li>
+</ul>
+<p>Tarea recomendada para abrir un nuevo chat: usar este documento como fuente de verdad, revisar git status y continuar desde el cierre de la ingesta RAG local. No reingestar los 28 PDFs sin una razon clara; usar el glosario para auditar fuentes.</p>
+<p>Prompt sugerido para pegar en el proximo chat:</p>
+<p>Lee documentation/CoolAgent_Documentacion_Maestra.html y toma ese documento como fuente central de verdad. Venimos de completar la ingesta RAG local desde C:\Users\Goyo\Desktop\Data Rag: 28 PDFs con texto extraible fueron cargados, el glosario /api/v1/knowledge/glossary muestra 30 documentos en total y la verificacion rapida dio 28/28 top_hit. El PDF CODIGO_DE_ERROS_GERAL_DE_TODAS_AS_MAQUINAS_E_MARCAS.pdf quedo pendiente porque requiere OCR. Antes de implementar algo nuevo, revisa git status, confirma si el fix de sanitizacion RAG en backend/app/services/rag_service.py y su test en backend/tests/unit/test_rag_service.py ya fueron commiteados/pusheados, y luego propon el siguiente paso tecnico.</p>
+<p>Nota operativa: si el nuevo chat necesita probar el RAG, primero usar /api/v1/knowledge/search o /api/v1/knowledge/glossary para validar recuperacion y solo despues hacer llamadas completas al chat con Claude para ahorrar credito.</p>
+    </main>
+  </div>
+</body>
+</html>

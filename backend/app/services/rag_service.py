@@ -72,6 +72,20 @@ class RAGService:
         normalized = cls._normalize_text(content)
         return sum(1 for keyword in keywords if keyword in normalized)
 
+    @staticmethod
+    def _sanitize_extracted_text(value: str) -> str:
+        """
+        Remove control characters that PostgreSQL cannot store in TEXT.
+
+        Some PDFs have extractable text mixed with NUL/control bytes. This is
+        still character-based ingestion, not OCR, so we keep readable text and
+        only strip invalid control characters before chunking.
+        """
+        return "".join(
+            char if char in "\n\r\t" or ord(char) >= 32 else " "
+            for char in value
+        )
+
     # ─── INGESTA ─────────────────────────────────────────
 
     async def ingest_pdf(
@@ -94,7 +108,7 @@ class RAGService:
         for page in reader.pages:
             page_text = page.extract_text()
             if page_text:
-                full_text += page_text + "\n\n"
+                full_text += self._sanitize_extracted_text(page_text) + "\n\n"
 
         if not full_text.strip():
             raise ValueError("No se pudo extraer texto del PDF")
@@ -130,6 +144,8 @@ class RAGService:
         category: str | None = None,
     ) -> KnowledgeDocument:
         """Ingestar texto plano directamente."""
+        content = self._sanitize_extracted_text(content)
+
         document = KnowledgeDocument(
             id=uuid.uuid4(),
             title=title,

@@ -87,6 +87,28 @@ async def test_ingest_text_creates_document_chunks_and_metadata(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_ingest_text_strips_invalid_control_characters(monkeypatch):
+    monkeypatch.setattr(
+        rag_module,
+        "get_embedding_provider",
+        lambda: FakeEmbeddingProvider(),
+    )
+    db = FakeDb()
+    service = rag_module.RAGService(db)
+
+    await service.ingest_text(
+        content="Samsung\x00 refrigerator\x01 service manual.",
+        title="Samsung refrigerator",
+    )
+
+    chunks = [obj for obj in db.added if isinstance(obj, KnowledgeChunk)]
+    assert len(chunks) == 1
+    assert "\x00" not in chunks[0].content
+    assert "\x01" not in chunks[0].content
+    assert "Samsung" in chunks[0].content
+
+
+@pytest.mark.asyncio
 async def test_build_context_formats_sources(monkeypatch):
     monkeypatch.setattr(
         rag_module,
