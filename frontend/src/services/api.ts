@@ -7,12 +7,35 @@ import {
   mockMessages,
 } from '../mocks/data';
 import type {
+  AuthCredentials,
+  AuthRegisterInput,
+  AuthSession,
+  AuthUser,
   ChatMessage,
   ErrorCode,
   ManufacturerSummary,
   TechnicalCase,
   TechnicalCaseInput,
 } from '../types';
+
+type BackendUser = {
+  id: string;
+  email: string;
+  full_name: string | null;
+  role: string;
+  is_active: boolean;
+  is_verified: boolean;
+  created_at: string;
+  updated_at: string;
+  last_login_at: string | null;
+};
+
+type BackendAuthSession = {
+  access_token: string;
+  token_type: string;
+  expires_in: number;
+  user: BackendUser;
+};
 
 type BackendTechnicalCase = {
   id: string;
@@ -77,6 +100,7 @@ const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? DEFAULT_API_BASE_URL;
 const delay = (ms = 180) => new Promise((resolve) => setTimeout(resolve, ms));
 const localCases = new Map<string, TechnicalCase>();
 const localMessages = new Map<string, ChatMessage[]>();
+let authToken: string | null = null;
 
 function compactDate(value?: string | null) {
   if (!value) return 'sin mensajes';
@@ -164,19 +188,50 @@ function toManufacturerSummary(item: BackendManufacturer): ManufacturerSummary {
   };
 }
 
+function toAuthUser(item: BackendUser): AuthUser {
+  return {
+    id: item.id,
+    email: item.email,
+    fullName: item.full_name ?? undefined,
+    role: item.role,
+    isActive: item.is_active,
+    isVerified: item.is_verified,
+    createdAt: item.created_at,
+    updatedAt: item.updated_at,
+    lastLoginAt: item.last_login_at ?? undefined,
+  };
+}
+
+function toAuthSession(item: BackendAuthSession): AuthSession {
+  return {
+    accessToken: item.access_token,
+    tokenType: item.token_type,
+    expiresIn: item.expires_in,
+    user: toAuthUser(item.user),
+  };
+}
+
 async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...init,
     headers: {
       Accept: 'application/json',
       'Content-Type': 'application/json',
+      ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
       ...init?.headers,
     },
   });
 
   if (!response.ok) {
     const details = await response.text();
-    throw new Error(`API ${response.status}: ${details}`);
+    let message = details;
+    try {
+      const parsed = JSON.parse(details) as { detail?: unknown };
+      message = typeof parsed.detail === 'string' ? parsed.detail : details;
+    } catch {
+      message = details;
+    }
+    throw new Error(`API ${response.status}: ${message}`);
   }
 
   return (await response.json()) as T;
@@ -217,6 +272,35 @@ function createLocalAssistantMessage(caseId: string, content: string): ChatMessa
 
 export const api = {
   baseUrl: API_BASE_URL,
+
+  setAuthToken(token?: string | null) {
+    authToken = token ?? null;
+  },
+
+  async login(credentials: AuthCredentials): Promise<AuthSession> {
+    const data = await requestJson<BackendAuthSession>('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify(credentials),
+    });
+    return toAuthSession(data);
+  },
+
+  async register(input: AuthRegisterInput): Promise<AuthUser> {
+    const data = await requestJson<BackendUser>('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({
+        email: input.email,
+        password: input.password,
+        full_name: cleanInput(input.fullName),
+      }),
+    });
+    return toAuthUser(data);
+  },
+
+  async getCurrentUser(): Promise<AuthUser> {
+    const data = await requestJson<BackendUser>('/auth/me');
+    return toAuthUser(data);
+  },
 
   async listCases(): Promise<TechnicalCase[]> {
     try {

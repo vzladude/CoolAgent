@@ -4,17 +4,36 @@ import {
   CircleHelp,
   Cloud,
   Info,
+  LogOut,
   Moon,
   Ruler,
   ShieldAlert,
   User,
 } from 'lucide-react-native';
 
-import { Badge, BodyText, Header, ListRow, Panel, Screen, SectionTitle } from '../components/ui';
+import { Badge, BodyText, Header, ListRow, Panel, PrimaryButton, Screen, SectionTitle } from '../components/ui';
+import { api } from '../services/api';
 import { theme } from '../theme/tokens';
-import type { NavigationApi } from '../types';
+import type { AuthSession, NavigationApi } from '../types';
 
-export function SettingsScreen({ nav }: { nav: NavigationApi }) {
+function profileName(session: AuthSession) {
+  return session.user.fullName ?? session.user.email;
+}
+
+function profileStatus(session: AuthSession) {
+  if (session.isLocal) return 'Sesion local';
+  return session.user.isVerified ? 'Email verificado' : 'Email pendiente';
+}
+
+export function SettingsScreen({
+  nav,
+  session,
+  onLogout,
+}: {
+  nav: NavigationApi;
+  session: AuthSession;
+  onLogout: () => Promise<void>;
+}) {
   return (
     <Screen>
       <Header title="Ajustes" eyebrow="CoolAgent" />
@@ -35,13 +54,29 @@ export function SettingsScreen({ nav }: { nav: NavigationApi }) {
           </View>
           <View style={{ flex: 1 }}>
             <Text style={{ color: theme.color.text, fontSize: 18, fontWeight: '800' }}>
-              Tecnico de campo
+              {profileName(session)}
             </Text>
-            <BodyText muted>Perfil local MVP</BodyText>
+            <BodyText muted>{profileStatus(session)}</BodyText>
           </View>
-          <Badge tone="success">ACTIVO</Badge>
+          <Badge tone={session.isLocal ? 'warning' : 'success'}>{session.user.role.toUpperCase()}</Badge>
         </View>
       </Panel>
+
+      <SectionTitle>Cuenta</SectionTitle>
+      <View style={{ gap: 10 }}>
+        <ListRow
+          title="Email"
+          subtitle={session.user.email}
+          icon={User}
+          right={<Badge tone={session.user.isActive ? 'success' : 'danger'}>{session.user.isActive ? 'activo' : 'inactivo'}</Badge>}
+        />
+        <ListRow
+          title="Token"
+          subtitle={session.isLocal ? 'Sin token bearer' : 'Guardado en SecureStore'}
+          icon={ShieldAlert}
+          right={<Badge tone={session.isLocal ? 'warning' : 'success'}>{session.isLocal ? 'local' : 'seguro'}</Badge>}
+        />
+      </View>
 
       <SectionTitle>Preferencias</SectionTitle>
       <View style={{ gap: 10 }}>
@@ -55,9 +90,9 @@ export function SettingsScreen({ nav }: { nav: NavigationApi }) {
       <View style={{ gap: 10 }}>
         <ListRow
           title="API backend"
-          subtitle="Mock local con adapter listo para API real"
+          subtitle={api.baseUrl}
           icon={Cloud}
-          right={<Badge tone="accent">MOCK</Badge>}
+          right={<Badge tone={session.isLocal ? 'warning' : 'accent'}>{session.isLocal ? 'LOCAL' : 'AUTH'}</Badge>}
         />
         <ListRow
           title="Offline / Sync"
@@ -87,6 +122,8 @@ export function SettingsScreen({ nav }: { nav: NavigationApi }) {
         <ListRow title="Soporte" subtitle="Canal pendiente" icon={CircleHelp} />
         <ListRow title="Version" subtitle="0.1.0 MVP mobile" icon={Info} />
       </View>
+
+      <PrimaryButton icon={LogOut} label="Cerrar sesion" onPress={onLogout} variant="ghost" />
     </Screen>
   );
 }

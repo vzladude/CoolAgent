@@ -244,7 +244,7 @@
 </tr>
 <tr>
 <td>Auth, roles y rate limiting</td>
-<td>Base implementada: registro, login, JWT bearer y /me. Pendiente: proteger endpoints existentes, asociar recursos a user_id, verificacion de email, recuperacion de password, roles/admin y monetizacion.</td>
+<td>Base implementada: registro, login, JWT bearer y /me. Mobile conectado con pantallas de acceso, token en SecureStore y restauracion por /me. Pendiente: proteger endpoints existentes, asociar recursos a user_id, verificacion de email, recuperacion de password, roles/admin y monetizacion.</td>
 </tr>
 <tr>
 <td>Documentacion</td>
@@ -322,7 +322,7 @@
 <tr>
 <td>Auth y roles</td>
 <td>Base implementada</td>
-<td>Registro/login con JWT listo en backend. Aun no se fuerza autenticacion en chat/RAG/codigos para no romper desarrollo local; ownership y roles quedan pendientes.</td>
+<td>Registro/login con JWT listo en backend y wiring mobile inicial. Aun no se fuerza autenticacion en chat/RAG/codigos para no romper desarrollo local; ownership y roles quedan pendientes.</td>
 </tr>
 <tr>
 <td>Infra/CI/CD</td>
@@ -528,7 +528,7 @@
 <tr>
 <td>7</td>
 <td>Fase E0 base implementada</td>
-<td>Auth backend listo: registro, login, JWT y /me. Pendiente ownership de datos, roles, password reset y verificacion de email.</td>
+<td>Auth backend listo y mobile inicial conectado: registro/login, JWT, /me, SecureStore y modo local de desarrollo. Pendiente ownership de datos, roles, password reset y verificacion de email.</td>
 </tr>
 </table></div>
 <h2 id="8-proximo-paso-recomendado">8. Proximo paso recomendado</h2>
@@ -541,7 +541,7 @@
 </ol>
 <div class="table-wrap"><table>
 <tr>
-<td>Recomendacion de secuencia | La integracion completa de codigos queda pendiente hasta probar un manual real. Mientras tanto, avanzar con auth mobile: pantallas de registro/login, almacenamiento seguro del token y luego asociar casos tecnicos al usuario autenticado.</td>
+<td>Recomendacion de secuencia | La integracion completa de codigos queda pendiente hasta probar un manual real. Auth mobile base queda iniciado; el siguiente paso es asociar casos tecnicos y usage al usuario autenticado sin romper el modo local.</td>
 </tr>
 </table></div>
 <h2 id="9-indice-de-documentos-existentes">9. Indice de documentos existentes</h2>
@@ -909,7 +909,7 @@ La base local puede haber tenido tablas creadas antes de Alembic. Para C2 se agr
 </tr>
 </table></div>
 <h2 id="17-fase-e0-auth-y-registro-de-usuarios">17. Fase E0: Auth y registro de usuarios</h2>
-<p>Se implemento una base de autenticacion backend para preparar CoolAgent para cuentas reales sin bloquear todavia el desarrollo local. La app ya puede registrar usuarios, iniciar sesion y consultar el perfil autenticado con JWT bearer.</p>
+<p>Se implemento una base de autenticacion backend para preparar CoolAgent para cuentas reales sin bloquear todavia el desarrollo local. La app ya puede registrar usuarios, iniciar sesion, guardar el JWT con SecureStore, restaurar la sesion consultando /auth/me y cerrar sesion. El frontend conserva un modo local para seguir probando el MVP cuando el backend no este disponible.</p>
 <div class="table-wrap"><table>
 <tr>
 <th>Elemento</th>
@@ -937,7 +937,7 @@ La base local puede haber tenido tablas creadas antes de Alembic. Para C2 se agr
 </tr>
 <tr>
 <td>Pendiente</td>
-<td>Conectar mobile, guardar token de forma segura, asociar casos/usage a user_id, verificacion de email, password reset, roles/admin y monetizacion futura.</td>
+<td>Asociar casos/usage a user_id, decidir cuando proteger chat/RAG/codigos con bearer obligatorio, verificacion de email, password reset, roles/admin y monetizacion futura.</td>
 </tr>
 <tr>
 <td>Tests</td>

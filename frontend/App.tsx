@@ -1,9 +1,10 @@
-import { useMemo, useState } from 'react';
-import { View } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import { BottomTabs, openTabRoute } from './src/components/ui';
+import { BodyText, BottomTabs, Header, openTabRoute, Panel, Screen } from './src/components/ui';
+import { AuthScreen } from './src/screens/auth';
 import {
   CaseDetailsScreen,
   CasesListScreen,
@@ -13,6 +14,8 @@ import {
 import { ErrorCodeDetailScreen, ErrorCodesScreen } from './src/screens/codes';
 import { HomeScreen } from './src/screens/home';
 import { SettingsScreen } from './src/screens/settings';
+import { api } from './src/services/api';
+import { clearStoredToken, loadStoredToken, saveStoredToken } from './src/services/authStorage';
 import {
   CalculatorScreen,
   DiagnosisAnalyzingScreen,
@@ -25,7 +28,16 @@ import {
   ToolsHubScreen,
 } from './src/screens/tools';
 import { theme } from './src/theme/tokens';
-import type { AppRoute, AppRouteName, NavigationApi, TabId } from './src/types';
+import type {
+  AppRoute,
+  AppRouteName,
+  AuthActions,
+  AuthCredentials,
+  AuthRegisterInput,
+  AuthSession,
+  NavigationApi,
+  TabId,
+} from './src/types';
 
 function tabForRoute(routeName: AppRouteName): TabId {
   if (routeName === 'cases' || routeName === 'newCase' || routeName === 'chat' || routeName === 'caseDetails') {
@@ -53,10 +65,43 @@ function tabForRoute(routeName: AppRouteName): TabId {
   return 'home';
 }
 
-function renderRoute(route: AppRoute, nav: NavigationApi) {
+function localSession(): AuthSession {
+  const now = new Date().toISOString();
+  return {
+    isLocal: true,
+    user: {
+      id: 'LOCAL-USER',
+      email: 'local@coolagent.dev',
+      fullName: 'Tecnico local',
+      role: 'technician',
+      isActive: true,
+      isVerified: false,
+      createdAt: now,
+      updatedAt: now,
+    },
+  };
+}
+
+function LoadingSessionScreen() {
+  return (
+    <Screen>
+      <Header title="CoolAgent" eyebrow="Sesion" />
+      <Panel>
+        <View style={{ alignItems: 'center', flexDirection: 'row', gap: 10 }}>
+          <ActivityIndicator color={theme.color.accent} />
+          <BodyText muted>Restaurando sesion...</BodyText>
+        </View>
+      </Panel>
+    </Screen>
+  );
+}
+
+function renderRoute(route: AppRoute, nav: NavigationApi, session: AuthSession, auth: AuthActions) {
   switch (route.name) {
+    case 'auth':
+      return <AuthScreen auth={auth} />;
     case 'home':
-      return <HomeScreen nav={nav} />;
+      return <HomeScreen nav={nav} session={session} />;
     case 'cases':
       return <CasesListScreen nav={nav} />;
     case 'newCase':
@@ -88,15 +133,51 @@ function renderRoute(route: AppRoute, nav: NavigationApi) {
     case 'codeDetail':
       return <ErrorCodeDetailScreen nav={nav} codeId={route.params?.codeId} initialCode={route.params?.code} />;
     case 'settings':
-      return <SettingsScreen nav={nav} />;
+      return <SettingsScreen nav={nav} session={session} onLogout={auth.logout} />;
     default:
-      return <HomeScreen nav={nav} />;
+      return <HomeScreen nav={nav} session={session} />;
   }
 }
 
 export default function App() {
   const [stack, setStack] = useState<AppRoute[]>([{ name: 'home' }]);
+  const [session, setSession] = useState<AuthSession | null>(null);
+  const [sessionLoading, setSessionLoading] = useState(true);
   const currentRoute = stack[stack.length - 1];
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const restoreSession = async () => {
+      const token = await loadStoredToken();
+      if (!token) {
+        if (!cancelled) setSessionLoading(false);
+        return;
+      }
+
+      api.setAuthToken(token);
+      try {
+        const user = await api.getCurrentUser();
+        if (!cancelled) {
+          setSession({
+            accessToken: token,
+            tokenType: 'bearer',
+            user,
+          });
+        }
+      } catch {
+        api.setAuthToken(null);
+        await clearStoredToken();
+      } finally {
+        if (!cancelled) setSessionLoading(false);
+      }
+    };
+
+    void restoreSession();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const nav = useMemo<NavigationApi>(
     () => ({
@@ -108,12 +189,59 @@ export default function App() {
     [currentRoute.name],
   );
 
+  const auth = useMemo<AuthActions>(
+    () => ({
+      login: async (credentials: AuthCredentials) => {
+        const nextSession = await api.login(credentials);
+        api.setAuthToken(nextSession.accessToken);
+        if (nextSession.accessToken) {
+          await saveStoredToken(nextSession.accessToken);
+        }
+        setSession(nextSession);
+        setStack([{ name: 'home' }]);
+      },
+      register: async (input: AuthRegisterInput) => {
+        await api.register(input);
+        const nextSession = await api.login({
+          email: input.email,
+          password: input.password,
+        });
+        api.setAuthToken(nextSession.accessToken);
+        if (nextSession.accessToken) {
+          await saveStoredToken(nextSession.accessToken);
+        }
+        setSession(nextSession);
+        setStack([{ name: 'home' }]);
+      },
+      continueLocal: () => {
+        api.setAuthToken(null);
+        setSession(localSession());
+        setStack([{ name: 'home' }]);
+      },
+      logout: async () => {
+        api.setAuthToken(null);
+        await clearStoredToken();
+        setSession(null);
+        setStack([{ name: 'home' }]);
+      },
+    }),
+    [],
+  );
+
   return (
     <SafeAreaProvider>
       <View style={{ backgroundColor: theme.color.bg, flex: 1 }}>
         <StatusBar backgroundColor={theme.color.bg} style="light" translucent={false} />
-        {renderRoute(currentRoute, nav)}
-        <BottomTabs nav={nav} />
+        {sessionLoading ? (
+          <LoadingSessionScreen />
+        ) : session ? (
+          <>
+            {renderRoute(currentRoute, nav, session, auth)}
+            <BottomTabs nav={nav} />
+          </>
+        ) : (
+          <AuthScreen auth={auth} />
+        )}
       </View>
     </SafeAreaProvider>
   );

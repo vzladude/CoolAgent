@@ -4,6 +4,7 @@ export type TabId = 'home' | 'cases' | 'tools' | 'codes' | 'settings';
 
 export type AppRouteName =
   | 'home'
+  | 'auth'
   | 'cases'
   | 'newCase'
   | 'chat'
@@ -31,6 +32,42 @@ export type NavigationApi = {
   goBack: () => void;
   open: (name: AppRouteName, params?: Record<string, unknown>) => void;
   resetToTab: (tab: TabId) => void;
+};
+
+export type AuthUser = {
+  id: string;
+  email: string;
+  fullName?: string;
+  role: string;
+  isActive: boolean;
+  isVerified: boolean;
+  createdAt: string;
+  updatedAt: string;
+  lastLoginAt?: string;
+};
+
+export type AuthSession = {
+  accessToken?: string;
+  tokenType?: string;
+  expiresIn?: number;
+  user: AuthUser;
+  isLocal?: boolean;
+};
+
+export type AuthCredentials = {
+  email: string;
+  password: string;
+};
+
+export type AuthRegisterInput = AuthCredentials & {
+  fullName?: string;
+};
+
+export type AuthActions = {
+  login: (credentials: AuthCredentials) => Promise<void>;
+  register: (input: AuthRegisterInput) => Promise<void>;
+  continueLocal: () => void;
+  logout: () => Promise<void>;
 };
 
 export type IconComponent = ComponentType<{

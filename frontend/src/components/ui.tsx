@@ -7,6 +7,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import type { TextInputProps } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   AlertTriangle,
@@ -140,18 +141,21 @@ export function PrimaryButton({
   label,
   icon: Icon,
   onPress,
+  disabled,
   variant = 'primary',
 }: {
   label: string;
   icon?: IconComponent;
   onPress: () => void;
+  disabled?: boolean;
   variant?: 'primary' | 'ghost';
 }) {
   const ghost = variant === 'ghost';
   return (
     <Pressable
+      disabled={disabled}
       onPress={onPress}
-      style={[styles.button, ghost && styles.buttonGhost]}
+      style={[styles.button, ghost && styles.buttonGhost, disabled && styles.buttonDisabled]}
     >
       {Icon ? (
         <Icon
@@ -245,21 +249,33 @@ export function Field({
   value,
   onChangeText,
   placeholder,
+  autoCapitalize = 'sentences',
+  keyboardType,
+  secureTextEntry,
+  textContentType,
 }: {
   label: string;
   value: string;
   onChangeText: (value: string) => void;
   placeholder?: string;
+  autoCapitalize?: TextInputProps['autoCapitalize'];
+  keyboardType?: TextInputProps['keyboardType'];
+  secureTextEntry?: boolean;
+  textContentType?: TextInputProps['textContentType'];
 }) {
   return (
     <View style={styles.field}>
       <Text style={styles.fieldLabel}>{label}</Text>
       <TextInput
+        autoCapitalize={autoCapitalize}
+        keyboardType={keyboardType}
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
         placeholderTextColor={theme.color.dim}
+        secureTextEntry={secureTextEntry}
         style={styles.input}
+        textContentType={textContentType}
       />
     </View>
   );
@@ -421,6 +437,9 @@ export const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     borderColor: theme.color.lineStrong,
     borderWidth: 1,
+  },
+  buttonDisabled: {
+    opacity: 0.55,
   },
   buttonText: {
     color: theme.color.black,

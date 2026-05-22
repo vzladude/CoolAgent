@@ -15,9 +15,13 @@ import {
 import { mockCases, primaryTools } from '../mocks/data';
 import { api } from '../services/api';
 import { theme } from '../theme/tokens';
-import type { NavigationApi, TechnicalCase } from '../types';
+import type { AuthSession, NavigationApi, TechnicalCase } from '../types';
 
-export function HomeScreen({ nav }: { nav: NavigationApi }) {
+function displayName(session: AuthSession) {
+  return session.user.fullName?.split(' ')[0] ?? session.user.email.split('@')[0] ?? 'Tecnico';
+}
+
+export function HomeScreen({ nav, session }: { nav: NavigationApi; session: AuthSession }) {
   const [latestCase, setLatestCase] = useState<TechnicalCase>(mockCases[0]);
 
   useEffect(() => {
@@ -35,9 +39,9 @@ export function HomeScreen({ nav }: { nav: NavigationApi }) {
   return (
     <Screen>
       <Header
-        title="Buenas, Ricardo."
+        title={`Buenas, ${displayName(session)}.`}
         eyebrow="CoolAgent"
-        right={<Badge tone="success">ONLINE</Badge>}
+        right={<Badge tone={session.isLocal ? 'warning' : 'success'}>{session.isLocal ? 'LOCAL' : 'ONLINE'}</Badge>}
       />
 
       <Panel accent>
