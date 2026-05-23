@@ -114,7 +114,7 @@ def patch_dependencies(monkeypatch, provider, cache, usage):
     monkeypatch.setattr(chat_module, "get_ai_provider", lambda: provider)
     monkeypatch.setattr(chat_module, "RAGService", FakeRAGService)
     monkeypatch.setattr(chat_module, "ResponseCache", lambda: cache)
-    monkeypatch.setattr(chat_module, "UsageService", lambda _db: usage)
+    monkeypatch.setattr(chat_module, "UsageService", lambda _db, user_id=None: usage)
 
 
 @pytest.mark.asyncio

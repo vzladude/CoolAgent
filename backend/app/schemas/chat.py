@@ -30,6 +30,7 @@ class TechnicalCaseUpdate(BaseModel):
 
 class TechnicalCaseResponse(BaseModel):
     id: UUID
+    user_id: UUID | None = None
     title: str | None
     manufacturer: str | None = None
     equipment_model: str | None = None

@@ -131,3 +131,17 @@ async def get_current_user(
             detail="Usuario no encontrado o inactivo",
         )
     return user
+
+
+async def get_optional_current_user(
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
+    db: AsyncSession = Depends(get_db),
+) -> User | None:
+    """Return the current user when a bearer token is present.
+
+    Endpoints that still support local development without auth can use this
+    dependency to attach ownership without requiring a token yet.
+    """
+    if credentials is None:
+        return None
+    return await get_current_user(credentials=credentials, db=db)

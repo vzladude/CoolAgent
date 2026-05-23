@@ -257,3 +257,66 @@ async def test_alembic_creates_users_auth_schema(db_session):
         """)
     )
     assert email_index.scalar_one() == "ix_users_email"
+
+
+@pytest.mark.asyncio
+async def test_alembic_adds_user_ownership_schema(db_session):
+    case_user_column = await db_session.execute(
+        text("""
+            SELECT column_name
+              FROM information_schema.columns
+             WHERE table_name = 'technical_cases'
+               AND column_name = 'user_id'
+        """)
+    )
+    assert case_user_column.scalar_one() == "user_id"
+
+    usage_user_column = await db_session.execute(
+        text("""
+            SELECT column_name
+              FROM information_schema.columns
+             WHERE table_name = 'usage_events'
+               AND column_name = 'user_id'
+        """)
+    )
+    assert usage_user_column.scalar_one() == "user_id"
+
+    case_user_index = await db_session.execute(
+        text("""
+            SELECT indexname
+              FROM pg_indexes
+             WHERE tablename = 'technical_cases'
+               AND indexname = 'ix_technical_cases_user_id'
+        """)
+    )
+    assert case_user_index.scalar_one() == "ix_technical_cases_user_id"
+
+    usage_user_index = await db_session.execute(
+        text("""
+            SELECT indexname
+              FROM pg_indexes
+             WHERE tablename = 'usage_events'
+               AND indexname = 'ix_usage_events_user_id'
+        """)
+    )
+    assert usage_user_index.scalar_one() == "ix_usage_events_user_id"
+
+    case_fk = await db_session.execute(
+        text("""
+            SELECT confrelid::regclass::text
+              FROM pg_constraint
+             WHERE conrelid = 'technical_cases'::regclass
+               AND conname = 'fk_technical_cases_user_id_users'
+        """)
+    )
+    assert case_fk.scalar_one() == "users"
+
+    usage_fk = await db_session.execute(
+        text("""
+            SELECT confrelid::regclass::text
+              FROM pg_constraint
+             WHERE conrelid = 'usage_events'::regclass
+               AND conname = 'fk_usage_events_user_id_users'
+        """)
+    )
+    assert usage_fk.scalar_one() == "users"

@@ -9,7 +9,7 @@ from datetime import datetime
 from decimal import Decimal
 from uuid import UUID
 
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import get_settings
@@ -20,9 +20,10 @@ from app.schemas.usage import UsageSummaryResponse
 class UsageService:
     """Records token usage and summarizes provider/cache activity."""
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession, user_id: UUID | None = None):
         self.db = db
         self.settings = get_settings()
+        self.user_id = user_id
 
     async def record_chat_event(
         self,
@@ -39,6 +40,7 @@ class UsageService:
         tokens_output: int = 0,
         cache_saved_tokens_input: int = 0,
         cache_saved_tokens_output: int = 0,
+        user_id: UUID | None = None,
     ) -> UsageEvent:
         resolved_case_id = technical_case_id or conversation_id
         estimated_cost = self.estimate_cost(
@@ -55,6 +57,7 @@ class UsageService:
         )
         event = UsageEvent(
             technical_case_id=resolved_case_id,
+            user_id=user_id or self.user_id,
             message_id=message_id,
             event_type=event_type,
             provider=provider,
@@ -89,6 +92,7 @@ class UsageService:
             date_from=date_from,
             date_to=date_to,
             model=model,
+            user_id=self.user_id,
         )
 
         counts_result = await self.db.execute(
@@ -156,6 +160,7 @@ class UsageService:
             ),
             technical_case_id=technical_case_id or conversation_id,
             conversation_id=technical_case_id or conversation_id,
+            user_id=self.user_id,
             date_from=date_from,
             date_to=date_to,
             model=model,
@@ -194,8 +199,13 @@ class UsageService:
         date_from: datetime | None,
         date_to: datetime | None,
         model: str | None,
+        user_id: UUID | None,
     ) -> list:
         filters = []
+        if user_id is not None:
+            filters.append(
+                or_(UsageEvent.user_id == user_id, UsageEvent.user_id.is_(None))
+            )
         if technical_case_id is not None:
             filters.append(UsageEvent.technical_case_id == technical_case_id)
         if date_from is not None:

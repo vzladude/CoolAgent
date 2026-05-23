@@ -25,6 +25,7 @@ class UsageSummaryResponse(BaseModel):
     estimated_cache_savings_usd: float | None = None
     technical_case_id: UUID | None = None
     conversation_id: UUID | None = None
+    user_id: UUID | None = None
     date_from: datetime | None = None
     date_to: datetime | None = None
     model: str | None = None

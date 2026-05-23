@@ -9,7 +9,9 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
+from app.models.user import User
 from app.schemas.usage import UsageSummaryResponse
+from app.services.auth_service import get_optional_current_user
 from app.services.usage_service import UsageService
 
 router = APIRouter()
@@ -23,9 +25,13 @@ async def get_usage_summary(
     date_to: datetime | None = Query(None),
     model: str | None = Query(None),
     db: AsyncSession = Depends(get_db),
+    current_user: User | None = Depends(get_optional_current_user),
 ):
     """Return token and cache activity summary."""
-    service = UsageService(db)
+    service = UsageService(
+        db,
+        user_id=current_user.id if current_user is not None else None,
+    )
     return await service.get_summary(
         technical_case_id=technical_case_id,
         conversation_id=conversation_id,

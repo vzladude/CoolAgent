@@ -80,6 +80,7 @@ export type TechnicalCaseStatus = 'open' | 'closed';
 
 export type TechnicalCase = {
   id: string;
+  userId?: string;
   title: string;
   manufacturer?: string;
   equipmentModel?: string;

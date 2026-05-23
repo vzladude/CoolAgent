@@ -39,6 +39,7 @@ type BackendAuthSession = {
 
 type BackendTechnicalCase = {
   id: string;
+  user_id: string | null;
   title: string | null;
   manufacturer: string | null;
   equipment_model: string | null;
@@ -132,6 +133,7 @@ function toBackendCaseInput(input: TechnicalCaseInput) {
 function toTechnicalCase(item: BackendTechnicalCase): TechnicalCase {
   return {
     id: item.id,
+    userId: item.user_id ?? undefined,
     title: item.title ?? 'Caso tecnico sin titulo',
     manufacturer: item.manufacturer ?? undefined,
     equipmentModel: item.equipment_model ?? undefined,

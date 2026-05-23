@@ -7,7 +7,7 @@ import json
 from datetime import datetime, timezone
 from uuid import UUID, uuid4
 
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.ai.prompts import build_case_prompt
@@ -35,14 +35,15 @@ from app.services.usage_service import UsageService
 class ChatService:
     """Service for technical cases and AI chat."""
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession, user_id: UUID | None = None):
         self.db = db
+        self.user_id = user_id
         self.settings = get_settings()
         self.provider = get_ai_provider()
         self.rag = RAGService(db)
         self.domain_guard = DomainGuard()
         self.cache = ResponseCache()
-        self.usage = UsageService(db)
+        self.usage = UsageService(db, user_id=user_id)
         self.context = TechnicalCaseContextService(db, self.provider, self.usage)
 
     async def create_case(self, data: TechnicalCaseCreate) -> TechnicalCaseResponse:
@@ -52,6 +53,7 @@ class ChatService:
             manufacturer=data.manufacturer,
             equipment_model=data.equipment_model,
             category=data.category,
+            user_id=self.user_id,
             status=data.status,
             created_at=datetime.now(timezone.utc),
             updated_at=datetime.now(timezone.utc),
@@ -79,6 +81,7 @@ class ChatService:
         )
         result = await self.db.execute(
             select(TechnicalCase, last_message_at.label("last_message_at"))
+            .where(*self._case_visibility_filters())
             .order_by(TechnicalCase.updated_at.desc())
             .limit(limit)
             .offset(offset)
@@ -86,6 +89,7 @@ class ChatService:
         return [
             TechnicalCaseResponse(
                 id=case.id,
+                user_id=case.user_id,
                 title=case.title,
                 manufacturer=case.manufacturer,
                 equipment_model=case.equipment_model,
@@ -423,9 +427,26 @@ class ChatService:
 
     async def _get_case_or_raise(self, technical_case_id: UUID) -> TechnicalCase:
         technical_case = await self.db.get(TechnicalCase, technical_case_id)
-        if not technical_case:
+        if not technical_case or not self._can_access_case(technical_case):
             raise ValueError(f"Caso tecnico {technical_case_id} no encontrado")
         return technical_case
+
+    def _case_visibility_filters(self) -> list:
+        if self.user_id is None:
+            return []
+        return [
+            or_(
+                TechnicalCase.user_id == self.user_id,
+                TechnicalCase.user_id.is_(None),
+            )
+        ]
+
+    def _can_access_case(self, technical_case: TechnicalCase) -> bool:
+        return (
+            self.user_id is None
+            or technical_case.user_id is None
+            or technical_case.user_id == self.user_id
+        )
 
     async def _get_case_history(
         self,

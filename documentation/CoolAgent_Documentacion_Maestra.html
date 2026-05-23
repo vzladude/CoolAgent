@@ -244,7 +244,7 @@
 </tr>
 <tr>
 <td>Auth, roles y rate limiting</td>
-<td>Base implementada: registro, login, JWT bearer y /me. Mobile conectado con pantallas de acceso, token en SecureStore y restauracion por /me. Pendiente: proteger endpoints existentes, asociar recursos a user_id, verificacion de email, recuperacion de password, roles/admin y monetizacion.</td>
+<td>Base implementada: registro, login, JWT bearer y /me. Mobile conectado con pantallas de acceso, token en SecureStore y restauracion por /me. Cases y usage ya aceptan ownership opcional por user_id cuando hay bearer, manteniendo modo local sin token. Pendiente: decidir cuando exigir auth obligatoria, verificacion de email, recuperacion de password, roles/admin y monetizacion.</td>
 </tr>
 <tr>
 <td>Documentacion</td>
@@ -528,7 +528,7 @@
 <tr>
 <td>7</td>
 <td>Fase E0 base implementada</td>
-<td>Auth backend listo y mobile inicial conectado: registro/login, JWT, /me, SecureStore y modo local de desarrollo. Pendiente ownership de datos, roles, password reset y verificacion de email.</td>
+<td>Auth backend listo y mobile inicial conectado: registro/login, JWT, /me, SecureStore y modo local de desarrollo. Ownership opcional de casos/usage iniciado. Pendiente roles, password reset, verificacion de email y decidir auth obligatoria por endpoint.</td>
 </tr>
 </table></div>
 <h2 id="8-proximo-paso-recomendado">8. Proximo paso recomendado</h2>
@@ -541,7 +541,7 @@
 </ol>
 <div class="table-wrap"><table>
 <tr>
-<td>Recomendacion de secuencia | La integracion completa de codigos queda pendiente hasta probar un manual real. Auth mobile base queda iniciado; el siguiente paso es asociar casos tecnicos y usage al usuario autenticado sin romper el modo local.</td>
+<td>Recomendacion de secuencia | La integracion completa de codigos queda pendiente hasta probar un manual real. Auth mobile y ownership opcional de casos/usage quedan iniciados; el siguiente paso es validar en mobile con usuarios reales y decidir que endpoints pasan a bearer obligatorio.</td>
 </tr>
 </table></div>
 <h2 id="9-indice-de-documentos-existentes">9. Indice de documentos existentes</h2>
@@ -937,7 +937,7 @@ La base local puede haber tenido tablas creadas antes de Alembic. Para C2 se agr
 </tr>
 <tr>
 <td>Pendiente</td>
-<td>Asociar casos/usage a user_id, decidir cuando proteger chat/RAG/codigos con bearer obligatorio, verificacion de email, password reset, roles/admin y monetizacion futura.</td>
+<td>Decidir cuando proteger chat/RAG/codigos con bearer obligatorio, verificacion de email, password reset, roles/admin y monetizacion futura.</td>
 </tr>
 <tr>
 <td>Tests</td>

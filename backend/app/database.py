@@ -130,6 +130,7 @@ async def ensure_development_schema(conn) -> None:
             ADD COLUMN IF NOT EXISTS manufacturer VARCHAR(200),
             ADD COLUMN IF NOT EXISTS equipment_model VARCHAR(200),
             ADD COLUMN IF NOT EXISTS category VARCHAR(100),
+            ADD COLUMN IF NOT EXISTS user_id UUID,
             ADD COLUMN IF NOT EXISTS status VARCHAR(20) NOT NULL DEFAULT 'open',
             ADD COLUMN IF NOT EXISTS context_summary TEXT,
             ADD COLUMN IF NOT EXISTS summary_until_message_id UUID,
@@ -286,6 +287,22 @@ async def ensure_development_schema(conn) -> None:
             IF to_regclass('public.conversations') IS NOT NULL THEN
                 DROP TABLE conversations;
             END IF;
+
+            IF EXISTS (
+                SELECT 1 FROM pg_tables
+                 WHERE schemaname = 'public'
+                   AND tablename = 'users'
+            ) AND NOT EXISTS (
+                SELECT 1 FROM pg_constraint
+                 WHERE conname = 'fk_technical_cases_user_id_users'
+                   AND conrelid = 'public.technical_cases'::regclass
+            ) THEN
+                ALTER TABLE technical_cases
+                ADD CONSTRAINT fk_technical_cases_user_id_users
+                FOREIGN KEY (user_id)
+                REFERENCES users(id)
+                ON DELETE SET NULL;
+            END IF;
         END $$;
     """))
     await conn.execute(text("""
@@ -307,6 +324,10 @@ async def ensure_development_schema(conn) -> None:
         ON technical_cases (status)
     """))
     await conn.execute(text("""
+        CREATE INDEX IF NOT EXISTS ix_technical_cases_user_id
+        ON technical_cases (user_id)
+    """))
+    await conn.execute(text("""
         CREATE INDEX IF NOT EXISTS ix_messages_technical_case_id
         ON messages (technical_case_id)
     """))
@@ -316,7 +337,28 @@ async def ensure_development_schema(conn) -> None:
             ADD COLUMN IF NOT EXISTS cache_saved_tokens_input INTEGER NOT NULL DEFAULT 0,
             ADD COLUMN IF NOT EXISTS cache_saved_tokens_output INTEGER NOT NULL DEFAULT 0,
             ADD COLUMN IF NOT EXISTS cache_saved_tokens_total INTEGER NOT NULL DEFAULT 0,
-            ADD COLUMN IF NOT EXISTS cache_saved_cost_usd NUMERIC(12, 8)
+            ADD COLUMN IF NOT EXISTS cache_saved_cost_usd NUMERIC(12, 8),
+            ADD COLUMN IF NOT EXISTS user_id UUID
+    """))
+    await conn.execute(text("""
+        DO $$
+        BEGIN
+            IF EXISTS (
+                SELECT 1 FROM pg_tables
+                 WHERE schemaname = 'public'
+                   AND tablename = 'users'
+            ) AND NOT EXISTS (
+                SELECT 1 FROM pg_constraint
+                 WHERE conname = 'fk_usage_events_user_id_users'
+                   AND conrelid = 'public.usage_events'::regclass
+            ) THEN
+                ALTER TABLE usage_events
+                ADD CONSTRAINT fk_usage_events_user_id_users
+                FOREIGN KEY (user_id)
+                REFERENCES users(id)
+                ON DELETE SET NULL;
+            END IF;
+        END $$;
     """))
     await conn.execute(text("""
         CREATE INDEX IF NOT EXISTS ix_usage_events_model
@@ -325,6 +367,10 @@ async def ensure_development_schema(conn) -> None:
     await conn.execute(text("""
         CREATE INDEX IF NOT EXISTS ix_usage_events_technical_case_id
         ON usage_events (technical_case_id)
+    """))
+    await conn.execute(text("""
+        CREATE INDEX IF NOT EXISTS ix_usage_events_user_id
+        ON usage_events (user_id)
     """))
     await conn.execute(text("""
         ALTER TABLE error_codes

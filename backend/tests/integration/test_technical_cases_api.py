@@ -10,6 +10,7 @@ from httpx import ASGITransport, AsyncClient
 from app.ai.providers.base import ChatResponse
 from app.database import get_db
 from app.models.technical_case import Message
+from app.routers.auth import router as auth_router
 from app.routers.chat import router as chat_router
 from app.services import chat_service as chat_module
 
@@ -38,6 +39,7 @@ def chat_app(db_session, monkeypatch):
     monkeypatch.setattr(chat_module, "RAGService", FakeRAGService)
 
     app = FastAPI()
+    app.include_router(auth_router, prefix="/auth")
     app.include_router(chat_router, prefix="/chat")
 
     async def override_get_db():
@@ -45,6 +47,24 @@ def chat_app(db_session, monkeypatch):
 
     app.dependency_overrides[get_db] = override_get_db
     return app
+
+
+async def register_and_login(client: AsyncClient, email: str) -> str:
+    password = "super-secret-123"
+    await client.post(
+        "/auth/register",
+        json={
+            "email": email,
+            "password": password,
+            "full_name": email.split("@", 1)[0],
+        },
+    )
+    response = await client.post(
+        "/auth/login",
+        json={"email": email, "password": password},
+    )
+    assert response.status_code == 200
+    return response.json()["access_token"]
 
 
 @pytest.mark.asyncio
@@ -106,3 +126,41 @@ async def test_legacy_conversations_endpoint_still_creates_case(chat_app):
 
     assert response.status_code == 200
     assert response.json()["title"] == "Caso legacy"
+
+
+@pytest.mark.asyncio
+async def test_authenticated_cases_are_scoped_by_user(chat_app):
+    transport = ASGITransport(app=chat_app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        token_a = await register_and_login(client, "owner-a@example.com")
+        token_b = await register_and_login(client, "owner-b@example.com")
+        headers_a = {"Authorization": f"Bearer {token_a}"}
+        headers_b = {"Authorization": f"Bearer {token_b}"}
+
+        case_a_response = await client.post(
+            "/chat/cases",
+            headers=headers_a,
+            json={"title": "Caso A"},
+        )
+        case_b_response = await client.post(
+            "/chat/cases",
+            headers=headers_b,
+            json={"title": "Caso B"},
+        )
+        list_a_response = await client.get("/chat/cases", headers=headers_a)
+        denied_response = await client.get(
+            f"/chat/cases/{case_b_response.json()['id']}",
+            headers=headers_a,
+        )
+        local_list_response = await client.get("/chat/cases")
+
+    assert case_a_response.status_code == 200
+    assert case_b_response.status_code == 200
+    assert case_a_response.json()["user_id"] is not None
+    assert case_b_response.json()["user_id"] is not None
+    assert [item["title"] for item in list_a_response.json()] == ["Caso A"]
+    assert denied_response.status_code == 404
+    assert {item["title"] for item in local_list_response.json()} == {
+        "Caso A",
+        "Caso B",
+    }
