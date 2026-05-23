@@ -10,7 +10,8 @@ from app.routers import chat as chat_router
 
 
 class FakeChatService:
-    def __init__(self, _db):
+    def __init__(self, _db, user_id=None):
+        self.user_id = user_id
         pass
 
     async def stream_case_message(self, case_id, data):
@@ -32,6 +33,15 @@ class FakeChatService:
 
 def build_app(monkeypatch):
     monkeypatch.setattr(chat_router, "ChatService", FakeChatService)
+
+    async def fake_get_user_from_access_token(_db, _token):
+        return type("FakeUser", (), {"id": uuid4()})()
+
+    monkeypatch.setattr(
+        chat_router,
+        "get_user_from_access_token",
+        fake_get_user_from_access_token,
+    )
     app = FastAPI()
     app.include_router(chat_router.router, prefix="/chat")
 
@@ -50,7 +60,10 @@ def test_websocket_stream_endpoint_sends_delta_and_done(monkeypatch):
         with client.websocket_connect(
             f"/chat/cases/{case_id}/messages/stream"
         ) as websocket:
-            websocket.send_json({"content": "Que significa E7?"})
+            websocket.send_json({
+                "access_token": "fake-token",
+                "content": "Que significa E7?",
+            })
 
             delta = websocket.receive_json()
             done = websocket.receive_json()
@@ -63,3 +76,20 @@ def test_websocket_stream_endpoint_sends_delta_and_done(monkeypatch):
     assert done["technical_case_id"] == str(case_id)
     assert done["conversation_id"] == str(case_id)
     assert done["cache_status"] == "miss"
+
+
+def test_websocket_stream_requires_token(monkeypatch):
+    app = build_app(monkeypatch)
+    case_id = uuid4()
+
+    with TestClient(app) as client:
+        with client.websocket_connect(
+            f"/chat/cases/{case_id}/messages/stream"
+        ) as websocket:
+            websocket.send_json({"content": "Que significa E7?"})
+            error = websocket.receive_json()
+
+    assert error == {
+        "type": "error",
+        "message": "Token de autenticacion requerido",
+    }

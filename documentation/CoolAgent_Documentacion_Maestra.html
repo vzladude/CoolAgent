@@ -244,7 +244,7 @@
 </tr>
 <tr>
 <td>Auth, roles y rate limiting</td>
-<td>Base implementada: registro, login, JWT bearer y /me. Mobile conectado con pantallas de acceso, token en SecureStore y restauracion por /me. Cases y usage ya aceptan ownership opcional por user_id cuando hay bearer, manteniendo modo local sin token. Pendiente: decidir cuando exigir auth obligatoria, verificacion de email, recuperacion de password, roles/admin y monetizacion.</td>
+<td>Base implementada: registro, login, JWT bearer y /me. Mobile conectado con pantallas de acceso, token en SecureStore y restauracion por /me. Chat/cases y usage/summary requieren bearer y usan user_id para aislar datos por usuario. Codigos de error quedan fuera de auth obligatoria por ahora. Pendiente: verificacion de email, recuperacion de password, roles/admin y monetizacion.</td>
 </tr>
 <tr>
 <td>Documentacion</td>
@@ -297,7 +297,7 @@
 <tr>
 <td>Chat refrigeracion general</td>
 <td>Completado funcional</td>
-<td>El dominio oficial es TechnicalCase: lista de casos, mensajes por caso, metadata opcional, streaming, RAG, DomainGuard, cache exacto y compactacion de contexto. Falta UX final, auth y cuotas ligadas a usuarios.</td>
+<td>El dominio oficial es TechnicalCase: lista de casos, mensajes por caso, metadata opcional, streaming, RAG, DomainGuard, cache exacto, compactacion de contexto y ownership por usuario autenticado. Falta UX final y cuotas ligadas a usuarios.</td>
 </tr>
 <tr>
 <td>Diagnostico por imagen</td>
@@ -321,8 +321,8 @@
 </tr>
 <tr>
 <td>Auth y roles</td>
-<td>Base implementada</td>
-<td>Registro/login con JWT listo en backend y wiring mobile inicial. Aun no se fuerza autenticacion en chat/RAG/codigos para no romper desarrollo local; ownership y roles quedan pendientes.</td>
+<td>Auth obligatoria parcial</td>
+<td>Registro/login con JWT listo en backend y wiring mobile inicial. Chat/cases y usage/summary exigen bearer; cada caso y evento de uso queda asociado a user_id. Knowledge y codigos de error no se fuerzan todavia. Roles quedan pendientes.</td>
 </tr>
 <tr>
 <td>Infra/CI/CD</td>
@@ -355,12 +355,12 @@
 <tr>
 <td>Chat</td>
 <td>POST /api/v1/chat/cases</td>
-<td>Actual oficial: crea caso tecnico con metadata opcional</td>
+<td>Actual oficial: requiere bearer; crea caso tecnico con metadata opcional y user_id</td>
 </tr>
 <tr>
 <td>Chat</td>
 <td>POST /api/v1/chat/cases/{case_id}/messages</td>
-<td>Actual oficial con DomainGuard, contexto de caso, RAG y cache exacto</td>
+<td>Actual oficial: requiere bearer; DomainGuard, contexto de caso, RAG y cache exacto</td>
 </tr>
 <tr>
 <td>Knowledge</td>
@@ -410,47 +410,47 @@
 <tr>
 <td>Usage</td>
 <td>GET /api/v1/usage/summary</td>
-<td>Actual: resume tokens, cache hits/misses y bloqueos de dominio.</td>
+<td>Actual: requiere bearer; resume tokens, cache hits/misses y bloqueos de dominio por usuario.</td>
 </tr>
 <tr>
 <td>Chat</td>
 <td>WebSocket /api/v1/chat/cases/{case_id}/messages/stream</td>
-<td>Actual oficial: streaming de respuesta con eventos delta/done/error</td>
+<td>Actual oficial: requiere token en query, header Authorization o payload inicial; streaming de respuesta con eventos delta/done/error</td>
 </tr>
 <tr>
 <td>Chat</td>
 <td>GET /api/v1/chat/cases</td>
-<td>Actual oficial: lista casos con metadata y last_message_at</td>
+<td>Actual oficial: requiere bearer; lista casos del usuario con metadata y last_message_at</td>
 </tr>
 <tr>
 <td>Chat</td>
 <td>GET /api/v1/chat/cases/{case_id}</td>
-<td>Actual oficial: detalle de caso tecnico</td>
+<td>Actual oficial: requiere bearer; detalle de caso tecnico del usuario</td>
 </tr>
 <tr>
 <td>Chat</td>
 <td>PATCH /api/v1/chat/cases/{case_id}</td>
-<td>Actual oficial: actualiza titulo, fabricante, modelo, categoria o estado</td>
+<td>Actual oficial: requiere bearer; actualiza titulo, fabricante, modelo, categoria o estado</td>
 </tr>
 <tr>
 <td>Chat</td>
 <td>GET /api/v1/chat/cases/{case_id}/messages</td>
-<td>Actual oficial: mensajes paginados por caso</td>
+<td>Actual oficial: requiere bearer; mensajes paginados por caso</td>
 </tr>
 <tr>
 <td>Chat legacy</td>
 <td>POST /api/v1/chat/conversations</td>
-<td>Alias temporal de /cases; deprecado internamente</td>
+<td>Alias temporal de /cases; requiere bearer; deprecado internamente</td>
 </tr>
 <tr>
 <td>Chat legacy</td>
 <td>POST /api/v1/chat/conversations/{conversation_id}/messages</td>
-<td>Alias temporal hacia /cases/{case_id}/messages</td>
+<td>Alias temporal hacia /cases/{case_id}/messages; requiere bearer</td>
 </tr>
 <tr>
 <td>Chat legacy</td>
 <td>WebSocket /api/v1/chat/conversations/{conversation_id}/messages/stream</td>
-<td>Alias temporal hacia streaming por caso</td>
+<td>Alias temporal hacia streaming por caso; requiere token</td>
 </tr>
 <tr>
 <td>Knowledge</td>
@@ -528,7 +528,7 @@
 <tr>
 <td>7</td>
 <td>Fase E0 base implementada</td>
-<td>Auth backend listo y mobile inicial conectado: registro/login, JWT, /me, SecureStore y modo local de desarrollo. Ownership opcional de casos/usage iniciado. Pendiente roles, password reset, verificacion de email y decidir auth obligatoria por endpoint.</td>
+<td>Auth backend listo y mobile inicial conectado: registro/login, JWT, /me, SecureStore y modo local de desarrollo. Chat/cases y usage/summary ya requieren bearer y filtran por user_id. Pendiente roles, password reset y verificacion de email.</td>
 </tr>
 </table></div>
 <h2 id="8-proximo-paso-recomendado">8. Proximo paso recomendado</h2>
@@ -541,7 +541,7 @@
 </ol>
 <div class="table-wrap"><table>
 <tr>
-<td>Recomendacion de secuencia | La integracion completa de codigos queda pendiente hasta probar un manual real. Auth mobile y ownership opcional de casos/usage quedan iniciados; el siguiente paso es validar en mobile con usuarios reales y decidir que endpoints pasan a bearer obligatorio.</td>
+<td>Recomendacion de secuencia | Ignorar por ahora la integracion completa de codigos hasta tener un manual real util. Con auth mobile y bearer obligatorio para chat/usage cerrados, el siguiente paso recomendado es continuar el Frontend MVP: probar flujos reales en mobile, pulir UX de sesion/casos/chat y preparar roles/cuotas para monetizacion futura.</td>
 </tr>
 </table></div>
 <h2 id="9-indice-de-documentos-existentes">9. Indice de documentos existentes</h2>
@@ -933,15 +933,15 @@ La base local puede haber tenido tablas creadas antes de Alembic. Para C2 se agr
 </tr>
 <tr>
 <td>Alcance actual</td>
-<td>No se fuerza autenticacion en chat/RAG/codigos todavia para no romper desarrollo local.</td>
+<td>Chat/cases, aliases legacy de chat, WebSocket de chat y usage/summary requieren autenticacion. Knowledge/RAG admin y codigos de error se dejan fuera de auth obligatoria por ahora.</td>
 </tr>
 <tr>
 <td>Pendiente</td>
-<td>Decidir cuando proteger chat/RAG/codigos con bearer obligatorio, verificacion de email, password reset, roles/admin y monetizacion futura.</td>
+<td>Verificacion de email, password reset, roles/admin, cuotas/rate limiting, monetizacion futura y decidir si Knowledge/RAG admin tambien pasa a bearer obligatorio.</td>
 </tr>
 <tr>
 <td>Tests</td>
-<td>Suite Docker verificada: 64 passed.</td>
+<td>Suite Docker verificada tras auth obligatoria chat/usage: 72 passed.</td>
 </tr>
 </table></div>
 <h2 id="18-handoff-para-nuevo-chat">18. Handoff para nuevo chat</h2>

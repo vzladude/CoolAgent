@@ -89,11 +89,15 @@ async def get_current_user(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token de autenticacion requerido",
         )
+    return await get_user_from_access_token(db, credentials.credentials)
 
+
+async def get_user_from_access_token(db: AsyncSession, token: str) -> User:
+    """Validate an access token and return its active user."""
     settings = get_settings()
     try:
         payload = jwt.decode(
-            credentials.credentials,
+            token,
             settings.secret_key,
             algorithms=[ALGORITHM],
         )

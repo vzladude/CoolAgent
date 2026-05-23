@@ -71,8 +71,11 @@ async def register_and_login(client: AsyncClient, email: str) -> str:
 async def test_cases_api_create_update_list_and_paginate_messages(chat_app, db_session):
     transport = ASGITransport(app=chat_app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
+        token = await register_and_login(client, "cases@example.com")
+        headers = {"Authorization": f"Bearer {token}"}
         create_response = await client.post(
             "/chat/cases",
+            headers=headers,
             json={
                 "title": "Nevera Whirlpool no enfria",
                 "manufacturer": "Whirlpool",
@@ -85,6 +88,7 @@ async def test_cases_api_create_update_list_and_paginate_messages(chat_app, db_s
 
         patch_response = await client.patch(
             f"/chat/cases/{case['id']}",
+            headers=headers,
             json={"status": "closed"},
         )
         assert patch_response.status_code == 200
@@ -101,12 +105,13 @@ async def test_cases_api_create_update_list_and_paginate_messages(chat_app, db_s
         )
         await db_session.flush()
 
-        list_response = await client.get("/chat/cases")
+        list_response = await client.get("/chat/cases", headers=headers)
         assert list_response.status_code == 200
         assert list_response.json()[0]["last_message_at"] is not None
 
         messages_response = await client.get(
             f"/chat/cases/{case['id']}/messages",
+            headers=headers,
             params={"limit": 10, "offset": 0},
         )
         assert messages_response.status_code == 200
@@ -119,8 +124,10 @@ async def test_cases_api_create_update_list_and_paginate_messages(chat_app, db_s
 async def test_legacy_conversations_endpoint_still_creates_case(chat_app):
     transport = ASGITransport(app=chat_app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
+        token = await register_and_login(client, "legacy@example.com")
         response = await client.post(
             "/chat/conversations",
+            headers={"Authorization": f"Bearer {token}"},
             json={"title": "Caso legacy"},
         )
 
@@ -152,7 +159,7 @@ async def test_authenticated_cases_are_scoped_by_user(chat_app):
             f"/chat/cases/{case_b_response.json()['id']}",
             headers=headers_a,
         )
-        local_list_response = await client.get("/chat/cases")
+        unauthenticated_response = await client.get("/chat/cases")
 
     assert case_a_response.status_code == 200
     assert case_b_response.status_code == 200
@@ -160,7 +167,15 @@ async def test_authenticated_cases_are_scoped_by_user(chat_app):
     assert case_b_response.json()["user_id"] is not None
     assert [item["title"] for item in list_a_response.json()] == ["Caso A"]
     assert denied_response.status_code == 404
-    assert {item["title"] for item in local_list_response.json()} == {
-        "Caso A",
-        "Caso B",
-    }
+    assert unauthenticated_response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_cases_require_bearer_token(chat_app):
+    transport = ASGITransport(app=chat_app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        list_response = await client.get("/chat/cases")
+        create_response = await client.post("/chat/cases", json={"title": "Sin token"})
+
+    assert list_response.status_code == 401
+    assert create_response.status_code == 401
