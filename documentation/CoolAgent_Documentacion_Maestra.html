@@ -937,7 +937,7 @@ La base local puede haber tenido tablas creadas antes de Alembic. Para C2 se agr
 </tr>
 <tr>
 <td>Frontend mobile</td>
-<td>AuthScreen muestra aviso de sesion expirada, separa modo AUTH de modo LOCAL y deja claro que el modo local usa mocks y no sincroniza casos. Casos/chat muestran errores y retry cuando falla backend/auth; los mocks solo se usan con localMode activo.</td>
+<td>AuthScreen muestra aviso de sesion expirada, separa modo AUTH de modo LOCAL y deja claro que el modo local usa mocks y no sincroniza casos. Casos/chat muestran errores y retry cuando falla backend/auth; los mocks solo se usan con localMode activo. En modo LOCAL, los mensajes de usuario/asistente se conservan en memoria durante la sesion para que el QA de chat no pierda contexto al salir y volver.</td>
 </tr>
 <tr>
 <td>Pendiente</td>
@@ -945,21 +945,22 @@ La base local puede haber tenido tablas creadas antes de Alembic. Para C2 se agr
 </tr>
 <tr>
 <td>Tests</td>
-<td>Suite Docker verificada tras auth obligatoria chat/usage: 72 passed. TypeScript mobile verificado con npx tsc --noEmit tras el pulido de sesion AUTH/LOCAL.</td>
+<td>Suite Docker verificada tras auth obligatoria chat/usage: 72 passed. TypeScript mobile verificado con npx tsc --noEmit tras el pulido de sesion AUTH/LOCAL. Smoke real por HTTP el 23 de mayo de 2026: health OK, registro/login OK, /auth/me OK, /chat/cases sin bearer 401, creacion/listado de caso con bearer OK y lectura de mensajes vacia sin llamar a Claude.</td>
 </tr>
 </table></div>
 <h2 id="18-handoff-para-nuevo-chat">18. Handoff para nuevo chat</h2>
-<p>Estado al 22 de mayo de 2026: la ingesta local del RAG desde C:\Users\Goyo\Desktop\Data Rag queda completada para los PDFs con texto extraible. Se cargaron 28 documentos nuevos; la knowledge base quedo con 30 documentos en total contando los 2 previos. Despues se cerro auth obligatoria para chat/usage y se avanzo el Frontend MVP con separacion clara entre sesion real AUTH y modo LOCAL.</p>
+<p>Estado al 23 de mayo de 2026: la ingesta local del RAG desde C:\Users\Goyo\Desktop\Data Rag queda completada para los PDFs con texto extraible. Se cargaron 28 documentos nuevos; la knowledge base quedo con 30 documentos en total contando los 2 previos. Despues se cerro auth obligatoria para chat/usage y se avanzo el Frontend MVP con separacion clara entre sesion real AUTH y modo LOCAL.</p>
 <ul>
 <li>Verificacion rapida: 28/28 documentos nuevos respondieron como primer resultado en /api/v1/knowledge/search usando una pregunta representativa por documento.</li>
 <li>El endpoint /api/v1/knowledge/glossary confirma que la metadata de ingesta esta guardada: titulo, source, tipo, fabricante, modelo, categoria, chunks, paginas, caracteres y fecha.</li>
 <li>El documento CODIGO_DE_ERROS_GERAL_DE_TODAS_AS_MAQUINAS_E_MARCAS.pdf no fue ingerido porque no tiene texto extraible. Queda pendiente OCR para una fase futura si se decide soportar documentos escaneados.</li>
 <li>Se corrigio la ingesta para limpiar caracteres de control invalidos encontrados en algunos PDFs antes de guardar chunks en PostgreSQL. Tests backend: 43 passed, 22 skipped.</li>
 <li>Frontend MVP: registro/login/restauracion por /me usan SecureStore; si una sesion real recibe 401 en chat/casos/usage se limpia el token y se vuelve a acceso con aviso. Casos/chat no hacen fallback silencioso a mocks salvo en modo LOCAL. TypeScript frontend: npx tsc --noEmit.</li>
+<li>QA mobile del 23 de mayo de 2026: se agrego frontend/.env.example para configurar EXPO_PUBLIC_API_URL en emulador/telefono fisico; se actualizo frontend/README.md con smoke QA; se valido por HTTP registro/login/auth/me/cases sin llamar a Claude.</li>
 </ul>
-<p>Tarea recomendada para abrir un nuevo chat: usar este documento como fuente de verdad, revisar git status y continuar con QA real del Frontend MVP en mobile: sesion, lista de casos, creacion de caso, chat, errores visibles y logout. No reingestar los 28 PDFs sin una razon clara; usar el glosario para auditar fuentes.</p>
+<p>Tarea recomendada para abrir un nuevo chat: usar este documento como fuente de verdad, revisar git status y continuar con QA real en dispositivo/emulador del Frontend MVP: sesion, lista de casos, creacion de caso, modo local, errores visibles y logout. No reingestar los 28 PDFs sin una razon clara; usar el glosario para auditar fuentes.</p>
 <p>Prompt sugerido para pegar en el proximo chat:</p>
-<p>Lee documentation/CoolAgent_Documentacion_Maestra.html y toma ese documento como fuente central de verdad. La ingesta RAG local desde C:\Users\Goyo\Desktop\Data Rag quedo completada para 28 PDFs con texto extraible; el glosario /api/v1/knowledge/glossary muestra 30 documentos y la verificacion rapida dio 28/28 top_hit. El PDF CODIGO_DE_ERROS_GERAL_DE_TODAS_AS_MAQUINAS_E_MARCAS.pdf requiere OCR y se ignora por ahora. Auth obligatoria para chat/usage esta cerrada, y el frontend ya separa sesion real AUTH de modo LOCAL con mocks. Antes de implementar algo nuevo, revisa git status y continua con QA/pulido del Frontend MVP mobile: sesion, casos, chat, errores visibles y preparacion de roles/cuotas.</p>
+<p>Lee documentation/CoolAgent_Documentacion_Maestra.html y toma ese documento como fuente central de verdad. La ingesta RAG local desde C:\Users\Goyo\Desktop\Data Rag quedo completada para 28 PDFs con texto extraible; el glosario /api/v1/knowledge/glossary muestra 30 documentos y la verificacion rapida dio 28/28 top_hit. El PDF CODIGO_DE_ERROS_GERAL_DE_TODAS_AS_MAQUINAS_E_MARCAS.pdf requiere OCR y se ignora por ahora. Auth obligatoria para chat/usage esta cerrada, y el frontend ya separa sesion real AUTH de modo LOCAL con mocks; frontend/.env.example documenta EXPO_PUBLIC_API_URL para emulador/telefono. Antes de implementar algo nuevo, revisa git status y continua con QA/pulido del Frontend MVP mobile: sesion, casos, chat, errores visibles y preparacion de roles/cuotas.</p>
 <p>Nota operativa: si el nuevo chat necesita probar el RAG, primero usar /api/v1/knowledge/search o /api/v1/knowledge/glossary para validar recuperacion y solo despues hacer llamadas completas al chat con Claude para ahorrar credito.</p>
     </main>
   </div>

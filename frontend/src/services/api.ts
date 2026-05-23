@@ -275,19 +275,41 @@ function createLocalCase(input: TechnicalCaseInput): TechnicalCase {
   return localCase;
 }
 
-function createLocalAssistantMessage(caseId: string, content: string): ChatMessage {
-  const message: ChatMessage = {
+function createLocalChatTurn(caseId: string, content: string): ChatMessage {
+  const now = new Date().toISOString();
+  const userMessage: ChatMessage = {
+    id: `LOCAL-USER-${Date.now()}`,
+    technicalCaseId: caseId,
+    role: 'user',
+    content,
+    createdAt: now,
+  };
+  const assistantMessage: ChatMessage = {
     id: `LOCAL-AI-${Date.now()}`,
     technicalCaseId: caseId,
     role: 'assistant',
     content:
       `Modo mock: recibi "${content}". Cuando el backend este disponible, ` +
       'esta respuesta vendra de Claude con RAG y guardara el historial real.',
-    createdAt: new Date().toISOString(),
+    createdAt: now,
     modelUsed: 'local-mock',
   };
-  localMessages.set(caseId, [...(localMessages.get(caseId) ?? []), message]);
-  return message;
+  const existingMessages = localMessages.has(caseId)
+    ? (localMessages.get(caseId) ?? [])
+    : mockMessages;
+  localMessages.set(caseId, [...existingMessages, userMessage, assistantMessage]);
+
+  const currentCase = localCases.get(caseId);
+  if (currentCase) {
+    localCases.set(caseId, {
+      ...currentCase,
+      lastMessage: content,
+      lastMessageAt: now,
+      updatedAt: 'ahora',
+    });
+  }
+
+  return assistantMessage;
 }
 
 export const api = {
@@ -420,7 +442,7 @@ export const api = {
   async sendCaseMessage(caseId: string, content: string): Promise<ChatMessage> {
     if (localMode) {
       await delay(350);
-      return createLocalAssistantMessage(caseId, content);
+      return createLocalChatTurn(caseId, content);
     }
     try {
       const data = await requestJson<BackendChatMessage>(`/chat/cases/${caseId}/messages`, {
