@@ -103,7 +103,7 @@ function renderRoute(route: AppRoute, nav: NavigationApi, session: AuthSession, 
     case 'home':
       return <HomeScreen nav={nav} session={session} />;
     case 'cases':
-      return <CasesListScreen nav={nav} />;
+      return <CasesListScreen nav={nav} initialFilter={route.params?.filter} />;
     case 'newCase':
       return <NewCaseScreen nav={nav} />;
     case 'chat':
@@ -199,6 +199,7 @@ export default function App() {
       activeTab: tabForRoute(currentRoute.name),
       goBack: () => setStack((current) => (current.length > 1 ? current.slice(0, -1) : current)),
       open: (name, params) => setStack((current) => [...current, { name, params }]),
+      resetToRoute: (name, params) => setStack([{ name, params }]),
       resetToTab: (tab) => setStack([{ name: openTabRoute(tab) }]),
     }),
     [currentRoute.name],

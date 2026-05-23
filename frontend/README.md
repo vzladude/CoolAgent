@@ -56,7 +56,9 @@ Before testing on a phone, verify:
   case.
 - `/chat/cases` without bearer returns `401`.
 - A fresh authenticated user has `0` initial cases.
-- Case metadata can close and reopen a case.
+- Case metadata can close and reopen a case. Closing/reopening blocks the
+  screen while saving and returns to the case list in the matching tab.
+- The case list has `Abiertos`, `Archivados`, and `Todos` tabs.
 - `LOCAL` mode creates temporary cases/messages and keeps them only in memory.
 
 Avoid sending real chat messages during smoke QA unless you intentionally want

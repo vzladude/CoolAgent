@@ -31,6 +31,7 @@ export type NavigationApi = {
   activeTab: TabId;
   goBack: () => void;
   open: (name: AppRouteName, params?: Record<string, unknown>) => void;
+  resetToRoute: (name: AppRouteName, params?: Record<string, unknown>) => void;
   resetToTab: (tab: TabId) => void;
 };
 

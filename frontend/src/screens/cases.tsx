@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { Archive, Info, Plus, RefreshCw, Send, Wrench } from 'lucide-react-native';
 
 import {
@@ -18,6 +18,19 @@ import {
 import { api } from '../services/api';
 import { theme } from '../theme/tokens';
 import type { ChatMessage, NavigationApi, TechnicalCase } from '../types';
+
+type CaseFilter = 'open' | 'closed' | 'all';
+type CaseStatusAction = 'closing' | 'reopening';
+
+const caseFilters: { id: CaseFilter; label: string }[] = [
+  { id: 'open', label: 'Abiertos' },
+  { id: 'closed', label: 'Archivados' },
+  { id: 'all', label: 'Todos' },
+];
+
+function normalizeCaseFilter(value?: unknown): CaseFilter {
+  return value === 'closed' || value === 'all' ? value : 'open';
+}
 
 function placeholderCase(caseId?: unknown): TechnicalCase {
   return {
@@ -50,8 +63,62 @@ function labelOrDash(value?: string) {
   return value && value.trim().length > 0 ? value : 'No definido';
 }
 
-export function CasesListScreen({ nav }: { nav: NavigationApi }) {
-  const [filter, setFilter] = useState<'open' | 'all'>('open');
+function BlockingStatusOverlay({ action }: { action: CaseStatusAction | null }) {
+  const copy =
+    action === 'closing'
+      ? {
+          title: 'Archivando caso...',
+          body: 'Guardando el estado y volviendo a la lista de casos.',
+        }
+      : {
+          title: 'Reabriendo caso...',
+          body: 'Restaurando el caso para continuar el diagnostico.',
+        };
+
+  return (
+    <Modal animationType="fade" transparent visible={action !== null}>
+      <View
+        style={{
+          alignItems: 'center',
+          backgroundColor: 'rgba(0,0,0,0.72)',
+          flex: 1,
+          justifyContent: 'center',
+          padding: 24,
+        }}
+      >
+        <View
+          style={{
+            alignItems: 'center',
+            backgroundColor: theme.color.surface,
+            borderColor: theme.color.lineStrong,
+            borderRadius: theme.radius.md,
+            borderWidth: 1,
+            gap: 12,
+            padding: 18,
+            width: '100%',
+          }}
+        >
+          <ActivityIndicator color={theme.color.accent} />
+          <Text style={{ color: theme.color.text, fontSize: 17, fontWeight: '800' }}>
+            {copy.title}
+          </Text>
+          <Text style={{ color: theme.color.muted, fontSize: 13, lineHeight: 18, textAlign: 'center' }}>
+            {copy.body}
+          </Text>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+export function CasesListScreen({
+  nav,
+  initialFilter,
+}: {
+  nav: NavigationApi;
+  initialFilter?: unknown;
+}) {
+  const [filter, setFilter] = useState<CaseFilter>(normalizeCaseFilter(initialFilter));
   const [cases, setCases] = useState<TechnicalCase[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -73,9 +140,20 @@ export function CasesListScreen({ nav }: { nav: NavigationApi }) {
   }, [loadCases]);
 
   const visibleCases = useMemo(
-    () => cases.filter((item) => filter === 'all' || item.status === 'open'),
+    () => cases.filter((item) => filter === 'all' || item.status === filter),
     [cases, filter],
   );
+
+  const emptyCopy =
+    filter === 'closed'
+      ? {
+          title: 'No hay casos archivados',
+          body: 'Cuando cierres un caso, aparecera aqui para consulta historica.',
+        }
+      : {
+          title: 'No hay casos abiertos',
+          body: 'Crea un nuevo caso tecnico para empezar el diagnostico.',
+        };
 
   return (
     <Screen>
@@ -94,19 +172,19 @@ export function CasesListScreen({ nav }: { nav: NavigationApi }) {
       />
 
       <View style={{ flexDirection: 'row', gap: 8 }}>
-        {(['open', 'all'] as const).map((item) => (
+        {caseFilters.map((item) => (
           <Pressable
-            key={item}
-            onPress={() => setFilter(item)}
+            key={item.id}
+            onPress={() => setFilter(item.id)}
             style={{
-              backgroundColor: filter === item ? theme.color.accent : theme.color.surface,
+              backgroundColor: filter === item.id ? theme.color.accent : theme.color.surface,
               borderRadius: theme.radius.pill,
               paddingHorizontal: 12,
               paddingVertical: 8,
             }}
           >
-            <Text style={{ color: filter === item ? theme.color.black : theme.color.text, fontWeight: '700' }}>
-              {item === 'open' ? 'Abiertos' : 'Todos'}
+            <Text style={{ color: filter === item.id ? theme.color.black : theme.color.text, fontWeight: '700' }}>
+              {item.label}
             </Text>
           </Pressable>
         ))}
@@ -146,9 +224,13 @@ export function CasesListScreen({ nav }: { nav: NavigationApi }) {
 
       {visibleCases.length === 0 && !loading && !error ? (
         <EmptyState
-          title="No hay casos con este filtro"
-          body="Crea un nuevo caso o revisa los casos cerrados."
-          action={<PrimaryButton icon={Plus} label="Crear caso" onPress={() => nav.open('newCase')} />}
+          title={filter === 'all' ? 'Todavia no hay casos' : emptyCopy.title}
+          body={filter === 'all' ? 'Crea tu primer caso tecnico para empezar.' : emptyCopy.body}
+          action={
+            filter !== 'closed' ? (
+              <PrimaryButton icon={Plus} label="Crear caso" onPress={() => nav.open('newCase')} />
+            ) : undefined
+          }
         />
       ) : null}
     </Screen>
@@ -413,7 +495,7 @@ export function CaseDetailsScreen({
     isTechnicalCase(initialCase) ? initialCase : placeholderCase(caseId),
   );
   const [error, setError] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
+  const [statusAction, setStatusAction] = useState<CaseStatusAction | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -434,20 +516,27 @@ export function CaseDetailsScreen({
 
   const toggleCaseStatus = async () => {
     const nextStatus = technicalCase.status === 'open' ? 'closed' : 'open';
-    setSaving(true);
+    const action = nextStatus === 'closed' ? 'closing' : 'reopening';
+    setStatusAction(action);
     setError(null);
     try {
       const updatedCase = await api.updateCase(resolvedCaseId, { status: nextStatus });
-      setTechnicalCase(updatedCase);
+      nav.resetToRoute('cases', {
+        filter: updatedCase.status === 'closed' ? 'closed' : 'open',
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo actualizar el caso.');
+      setStatusAction(null);
     } finally {
-      setSaving(false);
+      if (nextStatus !== 'closed') {
+        setStatusAction(null);
+      }
     }
   };
 
   return (
     <Screen>
+      <BlockingStatusOverlay action={statusAction} />
       <Header title="Metadata del caso" eyebrow={technicalCase.id} nav={nav} />
       <Panel>
         <View style={{ gap: 12 }}>
@@ -466,10 +555,10 @@ export function CaseDetailsScreen({
         </View>
       </Panel>
       <PrimaryButton
-        disabled={saving}
+        disabled={statusAction !== null}
         icon={technicalCase.status === 'open' ? Archive : RefreshCw}
         label={
-          saving
+          statusAction
             ? 'Actualizando...'
             : technicalCase.status === 'open'
               ? 'Cerrar caso'

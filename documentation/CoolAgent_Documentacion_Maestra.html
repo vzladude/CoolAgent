@@ -240,7 +240,7 @@
 </tr>
 <tr>
 <td>Frontend</td>
-<td>MVP mobile en pulido en frontend/: Expo/React Native con navegacion, modo local explicito, casos/chat reales contra API con bearer, cierre/reapertura de casos y codigos conectados a API publica con fallback controlado.</td>
+<td>MVP mobile en pulido en frontend/: Expo/React Native con navegacion, modo local explicito, casos/chat reales contra API con bearer, pestanas Abiertos/Archivados/Todos, cierre/reapertura de casos y codigos conectados a API publica con fallback controlado.</td>
 </tr>
 <tr>
 <td>Auth, roles y rate limiting</td>
@@ -937,7 +937,7 @@ La base local puede haber tenido tablas creadas antes de Alembic. Para C2 se agr
 </tr>
 <tr>
 <td>Frontend mobile</td>
-<td>AuthScreen muestra aviso de sesion expirada, separa modo AUTH de modo LOCAL y deja claro que el modo local no sincroniza casos. Casos/chat muestran errores y retry cuando falla backend/auth; Home y lista de casos ya no arrancan con casos demo hardcodeados. En modo LOCAL, los casos empiezan vacios y los mensajes de usuario/asistente se conservan en memoria durante la sesion. Metadata del caso permite cerrar y reabrir casos.</td>
+<td>AuthScreen muestra aviso de sesion expirada, separa modo AUTH de modo LOCAL y deja claro que el modo local no sincroniza casos. Casos/chat muestran errores y retry cuando falla backend/auth; Home y lista de casos ya no arrancan con casos demo hardcodeados. En modo LOCAL, los casos empiezan vacios y los mensajes de usuario/asistente se conservan en memoria durante la sesion. Metadata del caso permite cerrar y reabrir casos; cerrar/reabrir usa overlay bloqueante y al terminar devuelve al usuario a la lista en la pestana correcta.</td>
 </tr>
 <tr>
 <td>Pendiente</td>
@@ -958,6 +958,7 @@ La base local puede haber tenido tablas creadas antes de Alembic. Para C2 se agr
 <li>Frontend MVP: registro/login/restauracion por /me usan SecureStore; si una sesion real recibe 401 en chat/casos/usage se limpia el token y se vuelve a acceso con aviso. Casos/chat no hacen fallback silencioso a mocks salvo en modo LOCAL. TypeScript frontend: npx tsc --noEmit.</li>
 <li>QA mobile del 23 de mayo de 2026: se agrego frontend/.env.example para configurar EXPO_PUBLIC_API_URL en emulador/telefono fisico; se actualizo frontend/README.md con smoke QA; se valido por HTTP registro/login/auth/me/cases sin llamar a Claude.</li>
 <li>QA final-user del 23 de mayo de 2026: se eliminaron casos demo de Home/lista/local mode para no contaminar pruebas de usuario final; usuarios autenticados ya no ven casos legacy sin user_id; Metadata permite cerrar/reabrir casos.</li>
+<li>Regla UX vigente: cada flujo mobile debe pensarse desde usuario final. Acciones de estado como cerrar caso deben mostrar loading bloqueante, evitar doble toque, volver a una pantalla estable y dejar visible donde quedo el elemento, por ejemplo Archivados.</li>
 </ul>
 <p>Tarea recomendada para abrir un nuevo chat: usar este documento como fuente de verdad, revisar git status y continuar con QA real en dispositivo/emulador del Frontend MVP: sesion, lista de casos, creacion de caso, modo local, errores visibles y logout. No reingestar los 28 PDFs sin una razon clara; usar el glosario para auditar fuentes.</p>
 <p>Prompt sugerido para pegar en el proximo chat:</p>
