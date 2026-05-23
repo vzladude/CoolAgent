@@ -4,6 +4,7 @@ import { Text, View } from 'react-native';
 
 import {
   Badge,
+  EmptyState,
   Header,
   ListRow,
   Panel,
@@ -12,7 +13,7 @@ import {
   SectionTitle,
   ToolTile,
 } from '../components/ui';
-import { mockCases, primaryTools } from '../mocks/data';
+import { primaryTools } from '../mocks/data';
 import { api } from '../services/api';
 import { theme } from '../theme/tokens';
 import type { AuthSession, NavigationApi, TechnicalCase } from '../types';
@@ -22,15 +23,15 @@ function displayName(session: AuthSession) {
 }
 
 export function HomeScreen({ nav, session }: { nav: NavigationApi; session: AuthSession }) {
-  const [latestCase, setLatestCase] = useState<TechnicalCase>(mockCases[0]);
+  const [latestCase, setLatestCase] = useState<TechnicalCase | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     void api
       .listCases()
       .then((cases) => {
-        if (!cancelled && cases.length > 0) {
-          setLatestCase(cases[0]);
+        if (!cancelled) {
+          setLatestCase(cases[0] ?? null);
         }
       })
       .catch(() => undefined);
@@ -75,12 +76,20 @@ export function HomeScreen({ nav, session }: { nav: NavigationApi; session: Auth
       </Panel>
 
       <SectionTitle>Continuar</SectionTitle>
-      <ListRow
-        title={latestCase.title}
-        subtitle={latestCase.lastMessage ?? 'Sin mensajes todavia.'}
-        meta={`${latestCase.id} / ${latestCase.status.toUpperCase()} / ${latestCase.updatedAt}`}
-        onPress={() => nav.open('chat', { caseId: latestCase.id, case: latestCase })}
-      />
+      {latestCase ? (
+        <ListRow
+          title={latestCase.title}
+          subtitle={latestCase.lastMessage ?? 'Sin mensajes todavia.'}
+          meta={`${latestCase.id} / ${latestCase.status.toUpperCase()} / ${latestCase.updatedAt}`}
+          onPress={() => nav.open('chat', { caseId: latestCase.id, case: latestCase })}
+        />
+      ) : (
+        <EmptyState
+          title="Todavia no hay casos"
+          body="Crea tu primer caso tecnico para empezar el historial real de trabajo."
+          action={<PrimaryButton icon={Plus} label="Crear caso" onPress={() => nav.open('newCase')} />}
+        />
+      )}
 
       <SectionTitle>Herramientas</SectionTitle>
       <View style={{ flexDirection: 'row', gap: 10 }}>

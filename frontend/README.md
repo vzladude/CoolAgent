@@ -31,8 +31,9 @@ The cases/chat flow has two explicit modes:
 
 - `AUTH`: registration/login use the local backend, the token is stored with
   SecureStore, and cases/chat require bearer auth. Backend or auth failures are
-  shown as visible errors.
-- `LOCAL`: the app uses in-memory mock cases/messages and does not sync data.
+  shown as visible errors. A new user starts with an empty case list.
+- `LOCAL`: the app uses in-memory cases/messages created during the current
+  session and does not sync data.
 
 The API URL defaults are:
 
@@ -54,7 +55,9 @@ Before testing on a phone, verify:
 - `AUTH` flow can register, login, restore `/auth/me`, list cases and create a
   case.
 - `/chat/cases` without bearer returns `401`.
-- `LOCAL` mode creates mock cases/messages and keeps them only in memory.
+- A fresh authenticated user has `0` initial cases.
+- Case metadata can close and reopen a case.
+- `LOCAL` mode creates temporary cases/messages and keeps them only in memory.
 
 Avoid sending real chat messages during smoke QA unless you intentionally want
 to spend provider credits.

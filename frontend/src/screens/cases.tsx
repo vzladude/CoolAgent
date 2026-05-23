@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
-import { Info, Plus, RefreshCw, Send, Wrench } from 'lucide-react-native';
+import { Archive, Info, Plus, RefreshCw, Send, Wrench } from 'lucide-react-native';
 
 import {
   Badge,
@@ -15,13 +15,17 @@ import {
   Screen,
   SectionTitle,
 } from '../components/ui';
-import { mockCases } from '../mocks/data';
 import { api } from '../services/api';
 import { theme } from '../theme/tokens';
 import type { ChatMessage, NavigationApi, TechnicalCase } from '../types';
 
-function fallbackCase(caseId?: unknown): TechnicalCase {
-  return mockCases.find((item) => item.id === caseId) ?? mockCases[0];
+function placeholderCase(caseId?: unknown): TechnicalCase {
+  return {
+    id: typeof caseId === 'string' ? caseId : 'sin-caso',
+    title: 'Cargando caso...',
+    status: 'open',
+    updatedAt: 'sin sincronizar',
+  };
 }
 
 function isTechnicalCase(value: unknown): value is TechnicalCase {
@@ -35,7 +39,7 @@ function isTechnicalCase(value: unknown): value is TechnicalCase {
 }
 
 function resolveCaseId(caseId?: unknown) {
-  return typeof caseId === 'string' ? caseId : mockCases[0].id;
+  return typeof caseId === 'string' ? caseId : '';
 }
 
 function metaForCase(item: TechnicalCase) {
@@ -218,7 +222,7 @@ export function ChatScreen({
 }) {
   const resolvedCaseId = resolveCaseId(caseId);
   const [technicalCase, setTechnicalCase] = useState<TechnicalCase>(
-    isTechnicalCase(initialCase) ? initialCase : fallbackCase(caseId),
+    isTechnicalCase(initialCase) ? initialCase : placeholderCase(caseId),
   );
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
@@ -250,6 +254,10 @@ export function ChatScreen({
   const sendMessage = async () => {
     const content = input.trim();
     if (!content || sending) return;
+    if (technicalCase.status === 'closed') {
+      setError('Este caso esta cerrado. Reabre el caso para enviar mensajes.');
+      return;
+    }
 
     const userMessage: ChatMessage = {
       id: `LOCAL-USER-${Date.now()}`,
@@ -357,9 +365,14 @@ export function ChatScreen({
       <View style={{ padding: 16, paddingBottom: 96, borderTopWidth: 1, borderColor: theme.color.line }}>
         <Panel>
           <TextInput
+            editable={technicalCase.status === 'open'}
             multiline
             onChangeText={setInput}
-            placeholder="Pregunta o describe el sintoma..."
+            placeholder={
+              technicalCase.status === 'open'
+                ? 'Pregunta o describe el sintoma...'
+                : 'Caso cerrado'
+            }
             placeholderTextColor={theme.color.dim}
             style={{
               color: theme.color.text,
@@ -374,6 +387,7 @@ export function ChatScreen({
               {api.isLocalMode() ? 'Modo local' : 'Backend seguro'}
             </Badge>
             <PrimaryButton
+              disabled={sending || technicalCase.status === 'closed'}
               icon={sending ? RefreshCw : Send}
               label={sending ? '...' : 'Enviar'}
               onPress={sendMessage}
@@ -396,8 +410,10 @@ export function CaseDetailsScreen({
 }) {
   const resolvedCaseId = resolveCaseId(caseId);
   const [technicalCase, setTechnicalCase] = useState<TechnicalCase>(
-    isTechnicalCase(initialCase) ? initialCase : fallbackCase(caseId),
+    isTechnicalCase(initialCase) ? initialCase : placeholderCase(caseId),
   );
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -406,11 +422,29 @@ export function CaseDetailsScreen({
       .then((caseData) => {
         if (!cancelled) setTechnicalCase(caseData);
       })
-      .catch(() => undefined);
+      .catch((err) => {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : 'No se pudo cargar el caso.');
+        }
+      });
     return () => {
       cancelled = true;
     };
   }, [resolvedCaseId]);
+
+  const toggleCaseStatus = async () => {
+    const nextStatus = technicalCase.status === 'open' ? 'closed' : 'open';
+    setSaving(true);
+    setError(null);
+    try {
+      const updatedCase = await api.updateCase(resolvedCaseId, { status: nextStatus });
+      setTechnicalCase(updatedCase);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo actualizar el caso.');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <Screen>
@@ -420,9 +454,37 @@ export function CaseDetailsScreen({
           <ListRow title="Fabricante" subtitle={labelOrDash(technicalCase.manufacturer)} />
           <ListRow title="Modelo" subtitle={labelOrDash(technicalCase.equipmentModel)} />
           <ListRow title="Categoria" subtitle={labelOrDash(technicalCase.category)} />
-          <ListRow title="Estado" subtitle={technicalCase.status} />
+          <ListRow
+            title="Estado"
+            subtitle={technicalCase.status === 'open' ? 'Abierto' : 'Cerrado'}
+            right={
+              <Badge tone={technicalCase.status === 'open' ? 'success' : 'neutral'}>
+                {technicalCase.status}
+              </Badge>
+            }
+          />
         </View>
       </Panel>
+      <PrimaryButton
+        disabled={saving}
+        icon={technicalCase.status === 'open' ? Archive : RefreshCw}
+        label={
+          saving
+            ? 'Actualizando...'
+            : technicalCase.status === 'open'
+              ? 'Cerrar caso'
+              : 'Reabrir caso'
+        }
+        onPress={toggleCaseStatus}
+        variant={technicalCase.status === 'open' ? 'primary' : 'ghost'}
+      />
+      {error ? (
+        <Panel>
+          <Text style={{ color: theme.color.danger, fontSize: 13, lineHeight: 18 }}>
+            {error}
+          </Text>
+        </Panel>
+      ) : null}
       <SectionTitle>Resumen tecnico</SectionTitle>
       <Panel>
         <BodyText muted>{technicalCase.summary ?? 'Aun no hay resumen tecnico compactado.'}</BodyText>

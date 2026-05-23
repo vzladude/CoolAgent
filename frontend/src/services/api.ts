@@ -1,11 +1,6 @@
 import { Platform } from 'react-native';
 
-import {
-  mockCases,
-  mockErrorCodes,
-  mockManufacturers,
-  mockMessages,
-} from '../mocks/data';
+import { mockErrorCodes, mockManufacturers } from '../mocks/data';
 import type {
   AuthCredentials,
   AuthRegisterInput,
@@ -254,7 +249,7 @@ async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 function localCaseList() {
-  return [...localCases.values(), ...mockCases];
+  return [...localCases.values()];
 }
 
 function createLocalCase(input: TechnicalCaseInput): TechnicalCase {
@@ -296,7 +291,7 @@ function createLocalChatTurn(caseId: string, content: string): ChatMessage {
   };
   const existingMessages = localMessages.has(caseId)
     ? (localMessages.get(caseId) ?? [])
-    : mockMessages;
+    : [];
   localMessages.set(caseId, [...existingMessages, userMessage, assistantMessage]);
 
   const currentCase = localCases.get(caseId);
@@ -374,7 +369,7 @@ export const api = {
       await delay();
       const localCase = localCases.get(caseId);
       if (localCase) return localCase;
-      return mockCases.find((item) => item.id === caseId) ?? mockCases[0];
+      throw new Error('Caso local no encontrado.');
     }
     try {
       const data = await requestJson<BackendTechnicalCase>(`/chat/cases/${caseId}`);
@@ -409,8 +404,7 @@ export const api = {
         localCases.set(caseId, updated);
         return updated;
       }
-      const current = mockCases.find((item) => item.id === caseId) ?? mockCases[0];
-      return { ...current, ...input, updatedAt: 'ahora' };
+      throw new Error('Caso local no encontrado.');
     }
     try {
       const data = await requestJson<BackendTechnicalCase>(`/chat/cases/${caseId}`, {
@@ -427,7 +421,7 @@ export const api = {
     if (localMode) {
       await delay();
       if (localMessages.has(caseId)) return localMessages.get(caseId) ?? [];
-      return mockMessages;
+      return [];
     }
     try {
       const data = await requestJson<BackendMessageList>(

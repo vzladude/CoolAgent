@@ -9,7 +9,7 @@ from httpx import ASGITransport, AsyncClient
 
 from app.ai.providers.base import ChatResponse
 from app.database import get_db
-from app.models.technical_case import Message
+from app.models.technical_case import Message, TechnicalCase
 from app.routers.auth import router as auth_router
 from app.routers.chat import router as chat_router
 from app.services import chat_service as chat_module
@@ -168,6 +168,38 @@ async def test_authenticated_cases_are_scoped_by_user(chat_app):
     assert [item["title"] for item in list_a_response.json()] == ["Caso A"]
     assert denied_response.status_code == 404
     assert unauthenticated_response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_authenticated_cases_do_not_include_legacy_unowned_cases(
+    chat_app,
+    db_session,
+):
+    legacy_case = TechnicalCase(
+        id=uuid4(),
+        title="Caso legacy sin usuario",
+        user_id=None,
+        status="open",
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc),
+    )
+    db_session.add(legacy_case)
+    await db_session.flush()
+
+    transport = ASGITransport(app=chat_app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        token = await register_and_login(client, "fresh-user@example.com")
+        headers = {"Authorization": f"Bearer {token}"}
+
+        list_response = await client.get("/chat/cases", headers=headers)
+        denied_response = await client.get(
+            f"/chat/cases/{legacy_case.id}",
+            headers=headers,
+        )
+
+    assert list_response.status_code == 200
+    assert list_response.json() == []
+    assert denied_response.status_code == 404
 
 
 @pytest.mark.asyncio

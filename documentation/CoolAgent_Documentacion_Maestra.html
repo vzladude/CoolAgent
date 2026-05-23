@@ -240,7 +240,7 @@
 </tr>
 <tr>
 <td>Frontend</td>
-<td>MVP mobile en pulido en frontend/: Expo/React Native con navegacion, modo local explicito para mocks, casos/chat reales contra API con bearer y codigos conectados a API publica con fallback controlado.</td>
+<td>MVP mobile en pulido en frontend/: Expo/React Native con navegacion, modo local explicito, casos/chat reales contra API con bearer, cierre/reapertura de casos y codigos conectados a API publica con fallback controlado.</td>
 </tr>
 <tr>
 <td>Auth, roles y rate limiting</td>
@@ -528,7 +528,7 @@
 <tr>
 <td>7</td>
 <td>Fase E0 base implementada</td>
-<td>Auth backend listo y mobile conectado: registro/login, JWT, /me, SecureStore, modo local de desarrollo y manejo de sesion expirada. Chat/cases y usage/summary ya requieren bearer y filtran por user_id. Pendiente roles, password reset y verificacion de email.</td>
+<td>Auth backend listo y mobile conectado: registro/login, JWT, /me, SecureStore, modo local de desarrollo y manejo de sesion expirada. Chat/cases y usage/summary ya requieren bearer y filtran estrictamente por user_id; los casos legacy sin usuario ya no se muestran a cuentas finales. Pendiente roles, password reset y verificacion de email.</td>
 </tr>
 </table></div>
 <h2 id="8-proximo-paso-recomendado">8. Proximo paso recomendado</h2>
@@ -937,7 +937,7 @@ La base local puede haber tenido tablas creadas antes de Alembic. Para C2 se agr
 </tr>
 <tr>
 <td>Frontend mobile</td>
-<td>AuthScreen muestra aviso de sesion expirada, separa modo AUTH de modo LOCAL y deja claro que el modo local usa mocks y no sincroniza casos. Casos/chat muestran errores y retry cuando falla backend/auth; los mocks solo se usan con localMode activo. En modo LOCAL, los mensajes de usuario/asistente se conservan en memoria durante la sesion para que el QA de chat no pierda contexto al salir y volver.</td>
+<td>AuthScreen muestra aviso de sesion expirada, separa modo AUTH de modo LOCAL y deja claro que el modo local no sincroniza casos. Casos/chat muestran errores y retry cuando falla backend/auth; Home y lista de casos ya no arrancan con casos demo hardcodeados. En modo LOCAL, los casos empiezan vacios y los mensajes de usuario/asistente se conservan en memoria durante la sesion. Metadata del caso permite cerrar y reabrir casos.</td>
 </tr>
 <tr>
 <td>Pendiente</td>
@@ -945,7 +945,7 @@ La base local puede haber tenido tablas creadas antes de Alembic. Para C2 se agr
 </tr>
 <tr>
 <td>Tests</td>
-<td>Suite Docker verificada tras auth obligatoria chat/usage: 72 passed. TypeScript mobile verificado con npx tsc --noEmit tras el pulido de sesion AUTH/LOCAL. Smoke real por HTTP el 23 de mayo de 2026: health OK, registro/login OK, /auth/me OK, /chat/cases sin bearer 401, creacion/listado de caso con bearer OK y lectura de mensajes vacia sin llamar a Claude.</td>
+<td>Suite Docker verificada tras auth obligatoria chat/usage: 72 passed. TypeScript mobile verificado con npx tsc --noEmit tras el pulido de sesion AUTH/LOCAL. Smoke real por HTTP el 23 de mayo de 2026: health OK, registro/login OK, /auth/me OK, /chat/cases sin bearer 401, usuario nuevo con 0 casos iniciales, creacion/listado de caso con bearer OK, cierre de caso por PATCH OK y lectura de mensajes vacia sin llamar a Claude. Test backend focal: tests/integration/test_technical_cases_api.py, 5 passed.</td>
 </tr>
 </table></div>
 <h2 id="18-handoff-para-nuevo-chat">18. Handoff para nuevo chat</h2>
@@ -957,6 +957,7 @@ La base local puede haber tenido tablas creadas antes de Alembic. Para C2 se agr
 <li>Se corrigio la ingesta para limpiar caracteres de control invalidos encontrados en algunos PDFs antes de guardar chunks en PostgreSQL. Tests backend: 43 passed, 22 skipped.</li>
 <li>Frontend MVP: registro/login/restauracion por /me usan SecureStore; si una sesion real recibe 401 en chat/casos/usage se limpia el token y se vuelve a acceso con aviso. Casos/chat no hacen fallback silencioso a mocks salvo en modo LOCAL. TypeScript frontend: npx tsc --noEmit.</li>
 <li>QA mobile del 23 de mayo de 2026: se agrego frontend/.env.example para configurar EXPO_PUBLIC_API_URL en emulador/telefono fisico; se actualizo frontend/README.md con smoke QA; se valido por HTTP registro/login/auth/me/cases sin llamar a Claude.</li>
+<li>QA final-user del 23 de mayo de 2026: se eliminaron casos demo de Home/lista/local mode para no contaminar pruebas de usuario final; usuarios autenticados ya no ven casos legacy sin user_id; Metadata permite cerrar/reabrir casos.</li>
 </ul>
 <p>Tarea recomendada para abrir un nuevo chat: usar este documento como fuente de verdad, revisar git status y continuar con QA real en dispositivo/emulador del Frontend MVP: sesion, lista de casos, creacion de caso, modo local, errores visibles y logout. No reingestar los 28 PDFs sin una razon clara; usar el glosario para auditar fuentes.</p>
 <p>Prompt sugerido para pegar en el proximo chat:</p>

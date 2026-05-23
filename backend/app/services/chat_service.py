@@ -7,7 +7,7 @@ import json
 from datetime import datetime, timezone
 from uuid import UUID, uuid4
 
-from sqlalchemy import func, or_, select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.ai.prompts import build_case_prompt
@@ -434,19 +434,10 @@ class ChatService:
     def _case_visibility_filters(self) -> list:
         if self.user_id is None:
             return []
-        return [
-            or_(
-                TechnicalCase.user_id == self.user_id,
-                TechnicalCase.user_id.is_(None),
-            )
-        ]
+        return [TechnicalCase.user_id == self.user_id]
 
     def _can_access_case(self, technical_case: TechnicalCase) -> bool:
-        return (
-            self.user_id is None
-            or technical_case.user_id is None
-            or technical_case.user_id == self.user_id
-        )
+        return self.user_id is None or technical_case.user_id == self.user_id
 
     async def _get_case_history(
         self,
