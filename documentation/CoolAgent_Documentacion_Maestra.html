@@ -240,11 +240,11 @@
 </tr>
 <tr>
 <td>Frontend</td>
-<td>MVP mobile iniciado en frontend/: Expo/React Native con navegacion, mock data, casos/chat y codigos conectados a API con fallback.</td>
+<td>MVP mobile en pulido en frontend/: Expo/React Native con navegacion, modo local explicito para mocks, casos/chat reales contra API con bearer y codigos conectados a API publica con fallback controlado.</td>
 </tr>
 <tr>
 <td>Auth, roles y rate limiting</td>
-<td>Base implementada: registro, login, JWT bearer y /me. Mobile conectado con pantallas de acceso, token en SecureStore y restauracion por /me. Chat/cases y usage/summary requieren bearer y usan user_id para aislar datos por usuario. Codigos de error quedan fuera de auth obligatoria por ahora. Pendiente: verificacion de email, recuperacion de password, roles/admin y monetizacion.</td>
+<td>Base implementada: registro, login, JWT bearer y /me. Mobile conectado con pantallas de acceso, token en SecureStore, restauracion por /me, aviso de sesion expirada y separacion AUTH/LOCAL. Chat/cases y usage/summary requieren bearer y usan user_id para aislar datos por usuario. Codigos de error quedan fuera de auth obligatoria por ahora. Pendiente: verificacion de email, recuperacion de password, roles/admin y monetizacion.</td>
 </tr>
 <tr>
 <td>Documentacion</td>
@@ -523,25 +523,25 @@
 <tr>
 <td>6</td>
 <td>Frontend MVP</td>
-<td>Continuar wiring incremental del MVP mobile y crear endpoints nuevos solo cuando una pantalla real los necesite.</td>
+<td>Continuar wiring incremental del MVP mobile, probar flujos reales de sesion/casos/chat y crear endpoints nuevos solo cuando una pantalla real los necesite.</td>
 </tr>
 <tr>
 <td>7</td>
 <td>Fase E0 base implementada</td>
-<td>Auth backend listo y mobile inicial conectado: registro/login, JWT, /me, SecureStore y modo local de desarrollo. Chat/cases y usage/summary ya requieren bearer y filtran por user_id. Pendiente roles, password reset y verificacion de email.</td>
+<td>Auth backend listo y mobile conectado: registro/login, JWT, /me, SecureStore, modo local de desarrollo y manejo de sesion expirada. Chat/cases y usage/summary ya requieren bearer y filtran por user_id. Pendiente roles, password reset y verificacion de email.</td>
 </tr>
 </table></div>
 <h2 id="8-proximo-paso-recomendado">8. Proximo paso recomendado</h2>
-<p>Con Fase A, B0, B, C, C2 y Fase D base cerradas, el siguiente paso recomendado es usar el flujo provisional por Swagger para alimentar codigos desde documentos reales y continuar el frontend MVP con wiring incremental.</p>
+<p>Con Fase A, B0, B, C, C2 y Fase D base cerradas, y con la integracion completa de manuales reales pausada por ahora, el siguiente paso recomendado es continuar el Frontend MVP con foco en flujos reales de sesion, casos y chat.</p>
 <ol>
-<li>Si se inicia frontend, la pantalla base debe ser lista de casos tecnicos + chat activo + panel editable de metadata.</li>
-<li>Para Fase D, cuando este disponible el manual real, subirlo a Knowledge, extraer candidatos, corregir datos tecnicos si hace falta, comparar contra el documento fuente, revisar/aprobar y publicar solo codigos confiables.</li>
+<li>Probar en mobile registro, login, restauracion por /auth/me, expiracion de token, modo local y logout.</li>
+<li>Pulir casos/chat: lista, creacion, detalle, historial, errores visibles, retry y estado AUTH/LOCAL sin fallback silencioso cuando hay bearer.</li>
 <li>Mantener /conversations solo como alias temporal; la API oficial nueva es /cases.</li>
-<li>Rate limiting, cuotas, usuarios y monetizacion siguen pendientes para una fase futura.</li>
+<li>Despues de ese QA, preparar roles, cuotas y rate limiting para monetizacion futura. La integracion completa de codigos queda pausada hasta contar con un manual real util.</li>
 </ol>
 <div class="table-wrap"><table>
 <tr>
-<td>Recomendacion de secuencia | Ignorar por ahora la integracion completa de codigos hasta tener un manual real util. Con auth mobile y bearer obligatorio para chat/usage cerrados, el siguiente paso recomendado es continuar el Frontend MVP: probar flujos reales en mobile, pulir UX de sesion/casos/chat y preparar roles/cuotas para monetizacion futura.</td>
+<td>Recomendacion de secuencia | Ignorar por ahora la integracion completa de codigos hasta tener un manual real util. Con auth mobile y bearer obligatorio para chat/usage cerrados, el siguiente paso recomendado es continuar el Frontend MVP: validar flujos reales en mobile, mantener modo local solo para mocks explicitos, pulir UX de sesion/casos/chat y preparar roles/cuotas para monetizacion futura.</td>
 </tr>
 </table></div>
 <h2 id="9-indice-de-documentos-existentes">9. Indice de documentos existentes</h2>
@@ -909,7 +909,7 @@ La base local puede haber tenido tablas creadas antes de Alembic. Para C2 se agr
 </tr>
 </table></div>
 <h2 id="17-fase-e0-auth-y-registro-de-usuarios">17. Fase E0: Auth y registro de usuarios</h2>
-<p>Se implemento una base de autenticacion backend para preparar CoolAgent para cuentas reales sin bloquear todavia el desarrollo local. La app ya puede registrar usuarios, iniciar sesion, guardar el JWT con SecureStore, restaurar la sesion consultando /auth/me y cerrar sesion. El frontend conserva un modo local para seguir probando el MVP cuando el backend no este disponible.</p>
+<p>Se implemento una base de autenticacion backend para preparar CoolAgent para cuentas reales sin bloquear todavia el desarrollo local. La app ya puede registrar usuarios, iniciar sesion, guardar el JWT con SecureStore, restaurar la sesion consultando /auth/me, avisar cuando un token expira y cerrar sesion. El frontend conserva un modo local para seguir probando el MVP con mocks, pero en sesion real casos/chat ya no reemplazan fallos de backend por datos falsos.</p>
 <div class="table-wrap"><table>
 <tr>
 <th>Elemento</th>
@@ -936,25 +936,30 @@ La base local puede haber tenido tablas creadas antes de Alembic. Para C2 se agr
 <td>Chat/cases, aliases legacy de chat, WebSocket de chat y usage/summary requieren autenticacion. Knowledge/RAG admin y codigos de error se dejan fuera de auth obligatoria por ahora.</td>
 </tr>
 <tr>
+<td>Frontend mobile</td>
+<td>AuthScreen muestra aviso de sesion expirada, separa modo AUTH de modo LOCAL y deja claro que el modo local usa mocks y no sincroniza casos. Casos/chat muestran errores y retry cuando falla backend/auth; los mocks solo se usan con localMode activo.</td>
+</tr>
+<tr>
 <td>Pendiente</td>
 <td>Verificacion de email, password reset, roles/admin, cuotas/rate limiting, monetizacion futura y decidir si Knowledge/RAG admin tambien pasa a bearer obligatorio.</td>
 </tr>
 <tr>
 <td>Tests</td>
-<td>Suite Docker verificada tras auth obligatoria chat/usage: 72 passed.</td>
+<td>Suite Docker verificada tras auth obligatoria chat/usage: 72 passed. TypeScript mobile verificado con npx tsc --noEmit tras el pulido de sesion AUTH/LOCAL.</td>
 </tr>
 </table></div>
 <h2 id="18-handoff-para-nuevo-chat">18. Handoff para nuevo chat</h2>
-<p>Estado al 17 de mayo de 2026: la ingesta local del RAG desde C:\Users\Goyo\Desktop\Data Rag queda completada para los PDFs con texto extraible. Se cargaron 28 documentos nuevos; la knowledge base quedo con 30 documentos en total contando los 2 previos.</p>
+<p>Estado al 22 de mayo de 2026: la ingesta local del RAG desde C:\Users\Goyo\Desktop\Data Rag queda completada para los PDFs con texto extraible. Se cargaron 28 documentos nuevos; la knowledge base quedo con 30 documentos en total contando los 2 previos. Despues se cerro auth obligatoria para chat/usage y se avanzo el Frontend MVP con separacion clara entre sesion real AUTH y modo LOCAL.</p>
 <ul>
 <li>Verificacion rapida: 28/28 documentos nuevos respondieron como primer resultado en /api/v1/knowledge/search usando una pregunta representativa por documento.</li>
 <li>El endpoint /api/v1/knowledge/glossary confirma que la metadata de ingesta esta guardada: titulo, source, tipo, fabricante, modelo, categoria, chunks, paginas, caracteres y fecha.</li>
 <li>El documento CODIGO_DE_ERROS_GERAL_DE_TODAS_AS_MAQUINAS_E_MARCAS.pdf no fue ingerido porque no tiene texto extraible. Queda pendiente OCR para una fase futura si se decide soportar documentos escaneados.</li>
 <li>Se corrigio la ingesta para limpiar caracteres de control invalidos encontrados en algunos PDFs antes de guardar chunks en PostgreSQL. Tests backend: 43 passed, 22 skipped.</li>
+<li>Frontend MVP: registro/login/restauracion por /me usan SecureStore; si una sesion real recibe 401 en chat/casos/usage se limpia el token y se vuelve a acceso con aviso. Casos/chat no hacen fallback silencioso a mocks salvo en modo LOCAL. TypeScript frontend: npx tsc --noEmit.</li>
 </ul>
-<p>Tarea recomendada para abrir un nuevo chat: usar este documento como fuente de verdad, revisar git status y continuar desde el cierre de la ingesta RAG local. No reingestar los 28 PDFs sin una razon clara; usar el glosario para auditar fuentes.</p>
+<p>Tarea recomendada para abrir un nuevo chat: usar este documento como fuente de verdad, revisar git status y continuar con QA real del Frontend MVP en mobile: sesion, lista de casos, creacion de caso, chat, errores visibles y logout. No reingestar los 28 PDFs sin una razon clara; usar el glosario para auditar fuentes.</p>
 <p>Prompt sugerido para pegar en el proximo chat:</p>
-<p>Lee documentation/CoolAgent_Documentacion_Maestra.html y toma ese documento como fuente central de verdad. Venimos de completar la ingesta RAG local desde C:\Users\Goyo\Desktop\Data Rag: 28 PDFs con texto extraible fueron cargados, el glosario /api/v1/knowledge/glossary muestra 30 documentos en total y la verificacion rapida dio 28/28 top_hit. El PDF CODIGO_DE_ERROS_GERAL_DE_TODAS_AS_MAQUINAS_E_MARCAS.pdf quedo pendiente porque requiere OCR. Antes de implementar algo nuevo, revisa git status, confirma si el fix de sanitizacion RAG en backend/app/services/rag_service.py y su test en backend/tests/unit/test_rag_service.py ya fueron commiteados/pusheados, y luego propon el siguiente paso tecnico.</p>
+<p>Lee documentation/CoolAgent_Documentacion_Maestra.html y toma ese documento como fuente central de verdad. La ingesta RAG local desde C:\Users\Goyo\Desktop\Data Rag quedo completada para 28 PDFs con texto extraible; el glosario /api/v1/knowledge/glossary muestra 30 documentos y la verificacion rapida dio 28/28 top_hit. El PDF CODIGO_DE_ERROS_GERAL_DE_TODAS_AS_MAQUINAS_E_MARCAS.pdf requiere OCR y se ignora por ahora. Auth obligatoria para chat/usage esta cerrada, y el frontend ya separa sesion real AUTH de modo LOCAL con mocks. Antes de implementar algo nuevo, revisa git status y continua con QA/pulido del Frontend MVP mobile: sesion, casos, chat, errores visibles y preparacion de roles/cuotas.</p>
 <p>Nota operativa: si el nuevo chat necesita probar el RAG, primero usar /api/v1/knowledge/search o /api/v1/knowledge/glossary para validar recuperacion y solo despues hacer llamadas completas al chat con Claude para ahorrar credito.</p>
     </main>
   </div>

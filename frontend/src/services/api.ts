@@ -102,6 +102,17 @@ const delay = (ms = 180) => new Promise((resolve) => setTimeout(resolve, ms));
 const localCases = new Map<string, TechnicalCase>();
 const localMessages = new Map<string, ChatMessage[]>();
 let authToken: string | null = null;
+let localMode = false;
+let unauthorizedHandler: (() => void | Promise<void>) | undefined;
+
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+  ) {
+    super(message);
+  }
+}
 
 function compactDate(value?: string | null) {
   if (!value) return 'sin mensajes';
@@ -233,10 +244,17 @@ async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
     } catch {
       message = details;
     }
-    throw new Error(`API ${response.status}: ${message}`);
+    if (response.status === 401 && authToken && !path.startsWith('/auth/')) {
+      await unauthorizedHandler?.();
+    }
+    throw new ApiError(`API ${response.status}: ${message}`, response.status);
   }
 
   return (await response.json()) as T;
+}
+
+function localCaseList() {
+  return [...localCases.values(), ...mockCases];
 }
 
 function createLocalCase(input: TechnicalCaseInput): TechnicalCase {
@@ -279,6 +297,18 @@ export const api = {
     authToken = token ?? null;
   },
 
+  setLocalMode(enabled: boolean) {
+    localMode = enabled;
+  },
+
+  isLocalMode() {
+    return localMode;
+  },
+
+  setUnauthorizedHandler(handler?: () => void | Promise<void>) {
+    unauthorizedHandler = handler;
+  },
+
   async login(credentials: AuthCredentials): Promise<AuthSession> {
     const data = await requestJson<BackendAuthSession>('/auth/login', {
       method: 'POST',
@@ -305,28 +335,38 @@ export const api = {
   },
 
   async listCases(): Promise<TechnicalCase[]> {
+    if (localMode) {
+      await delay();
+      return localCaseList();
+    }
     try {
       const data = await requestJson<BackendTechnicalCase[]>('/chat/cases?limit=50');
       return data.map(toTechnicalCase);
     } catch {
-      await delay();
-      return [...localCases.values(), ...mockCases];
+      throw new Error('No se pudieron sincronizar los casos con el backend.');
     }
   },
 
   async getCase(caseId: string): Promise<TechnicalCase> {
-    try {
-      const data = await requestJson<BackendTechnicalCase>(`/chat/cases/${caseId}`);
-      return toTechnicalCase(data);
-    } catch {
+    if (localMode) {
       await delay();
       const localCase = localCases.get(caseId);
       if (localCase) return localCase;
       return mockCases.find((item) => item.id === caseId) ?? mockCases[0];
     }
+    try {
+      const data = await requestJson<BackendTechnicalCase>(`/chat/cases/${caseId}`);
+      return toTechnicalCase(data);
+    } catch {
+      throw new Error('No se pudo cargar el caso desde el backend.');
+    }
   },
 
   async createCase(input: TechnicalCaseInput): Promise<TechnicalCase> {
+    if (localMode) {
+      await delay();
+      return createLocalCase(input);
+    }
     try {
       const data = await requestJson<BackendTechnicalCase>('/chat/cases', {
         method: 'POST',
@@ -334,19 +374,12 @@ export const api = {
       });
       return toTechnicalCase(data);
     } catch {
-      await delay();
-      return createLocalCase(input);
+      throw new Error('No se pudo crear el caso en el backend.');
     }
   },
 
   async updateCase(caseId: string, input: TechnicalCaseInput): Promise<TechnicalCase> {
-    try {
-      const data = await requestJson<BackendTechnicalCase>(`/chat/cases/${caseId}`, {
-        method: 'PATCH',
-        body: JSON.stringify(toBackendCaseInput(input)),
-      });
-      return toTechnicalCase(data);
-    } catch {
+    if (localMode) {
       await delay();
       const localCase = localCases.get(caseId);
       if (localCase) {
@@ -357,22 +390,38 @@ export const api = {
       const current = mockCases.find((item) => item.id === caseId) ?? mockCases[0];
       return { ...current, ...input, updatedAt: 'ahora' };
     }
+    try {
+      const data = await requestJson<BackendTechnicalCase>(`/chat/cases/${caseId}`, {
+        method: 'PATCH',
+        body: JSON.stringify(toBackendCaseInput(input)),
+      });
+      return toTechnicalCase(data);
+    } catch {
+      throw new Error('No se pudo actualizar el caso en el backend.');
+    }
   },
 
   async listCaseMessages(caseId: string): Promise<ChatMessage[]> {
+    if (localMode) {
+      await delay();
+      if (localMessages.has(caseId)) return localMessages.get(caseId) ?? [];
+      return mockMessages;
+    }
     try {
       const data = await requestJson<BackendMessageList>(
         `/chat/cases/${caseId}/messages?limit=100&offset=0`,
       );
       return data.messages.map(toChatMessage);
     } catch {
-      await delay();
-      if (localMessages.has(caseId)) return localMessages.get(caseId) ?? [];
-      return mockMessages;
+      throw new Error('No se pudo cargar el historial del caso.');
     }
   },
 
   async sendCaseMessage(caseId: string, content: string): Promise<ChatMessage> {
+    if (localMode) {
+      await delay(350);
+      return createLocalAssistantMessage(caseId, content);
+    }
     try {
       const data = await requestJson<BackendChatMessage>(`/chat/cases/${caseId}/messages`, {
         method: 'POST',
@@ -380,8 +429,7 @@ export const api = {
       });
       return toChatMessage(data);
     } catch {
-      await delay(350);
-      return createLocalAssistantMessage(caseId, content);
+      throw new Error('No se pudo enviar el mensaje al backend.');
     }
   },
 

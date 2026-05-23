@@ -48,13 +48,17 @@ function labelOrDash(value?: string) {
 
 export function CasesListScreen({ nav }: { nav: NavigationApi }) {
   const [filter, setFilter] = useState<'open' | 'all'>('open');
-  const [cases, setCases] = useState<TechnicalCase[]>(mockCases);
+  const [cases, setCases] = useState<TechnicalCase[]>([]);
+  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const loadCases = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       setCases(await api.listCases());
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudieron cargar los casos.');
     } finally {
       setLoading(false);
     }
@@ -76,6 +80,9 @@ export function CasesListScreen({ nav }: { nav: NavigationApi }) {
         eyebrow="Trabajos"
         right={
           <View style={{ flexDirection: 'row', gap: 8 }}>
+            <Badge tone={api.isLocalMode() ? 'warning' : 'success'}>
+              {api.isLocalMode() ? 'LOCAL' : 'AUTH'}
+            </Badge>
             <IconButton icon={RefreshCw} onPress={loadCases} />
             <IconButton icon={Plus} onPress={() => nav.open('newCase')} />
           </View>
@@ -110,6 +117,17 @@ export function CasesListScreen({ nav }: { nav: NavigationApi }) {
         </Panel>
       ) : null}
 
+      {error ? (
+        <Panel>
+          <Text style={{ color: theme.color.danger, fontSize: 13, lineHeight: 18 }}>
+            {error}
+          </Text>
+          <View style={{ marginTop: 10 }}>
+            <PrimaryButton icon={RefreshCw} label="Reintentar" onPress={loadCases} variant="ghost" />
+          </View>
+        </Panel>
+      ) : null}
+
       {visibleCases.map((item) => (
         <ListRow
           key={item.id}
@@ -122,7 +140,7 @@ export function CasesListScreen({ nav }: { nav: NavigationApi }) {
         />
       ))}
 
-      {visibleCases.length === 0 ? (
+      {visibleCases.length === 0 && !loading && !error ? (
         <EmptyState
           title="No hay casos con este filtro"
           body="Crea un nuevo caso o revisa los casos cerrados."
@@ -138,10 +156,12 @@ export function NewCaseScreen({ nav }: { nav: NavigationApi }) {
   const [manufacturer, setManufacturer] = useState('');
   const [model, setModel] = useState('');
   const [category, setCategory] = useState('');
+  const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   const createCase = async () => {
     setSaving(true);
+    setError(null);
     try {
       const created = await api.createCase({
         title,
@@ -150,6 +170,8 @@ export function NewCaseScreen({ nav }: { nav: NavigationApi }) {
         category,
       });
       nav.open('chat', { caseId: created.id, case: created });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo crear el caso.');
     } finally {
       setSaving(false);
     }
@@ -171,6 +193,13 @@ export function NewCaseScreen({ nav }: { nav: NavigationApi }) {
         label={saving ? 'Creando...' : 'Crear y empezar chat'}
         onPress={createCase}
       />
+      {error ? (
+        <Panel>
+          <Text style={{ color: theme.color.danger, fontSize: 13, lineHeight: 18 }}>
+            {error}
+          </Text>
+        </Panel>
+      ) : null}
       <BodyText muted>
         Puedes dejar campos vacios. CoolAgent puede generar un titulo simple desde el primer mensaje.
       </BodyText>
@@ -193,11 +222,13 @@ export function ChatScreen({
   );
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
+  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
 
   const loadChat = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const [caseData, caseMessages] = await Promise.all([
         api.getCase(resolvedCaseId),
@@ -205,6 +236,8 @@ export function ChatScreen({
       ]);
       setTechnicalCase(caseData);
       setMessages(caseMessages);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo cargar el chat.');
     } finally {
       setLoading(false);
     }
@@ -228,11 +261,14 @@ export function ChatScreen({
 
     setInput('');
     setMessages((current) => [...current, userMessage]);
+    setError(null);
     setSending(true);
 
     try {
       const assistantMessage = await api.sendCaseMessage(resolvedCaseId, content);
       setMessages((current) => [...current, assistantMessage]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo enviar el mensaje.');
     } finally {
       setSending(false);
     }
@@ -265,6 +301,14 @@ export function ChatScreen({
               <ActivityIndicator color={theme.color.accent} />
               <BodyText muted>Cargando historial...</BodyText>
             </View>
+          </Panel>
+        ) : null}
+
+        {error ? (
+          <Panel>
+            <Text style={{ color: theme.color.danger, fontSize: 13, lineHeight: 18 }}>
+              {error}
+            </Text>
           </Panel>
         ) : null}
 
@@ -326,7 +370,9 @@ export function ChatScreen({
             value={input}
           />
           <View style={{ alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', marginTop: 10 }}>
-            <Badge tone="accent">Backend + mock fallback</Badge>
+            <Badge tone={api.isLocalMode() ? 'warning' : 'success'}>
+              {api.isLocalMode() ? 'Modo local' : 'Backend seguro'}
+            </Badge>
             <PrimaryButton
               icon={sending ? RefreshCw : Send}
               label={sending ? '...' : 'Enviar'}
@@ -355,9 +401,12 @@ export function CaseDetailsScreen({
 
   useEffect(() => {
     let cancelled = false;
-    void api.getCase(resolvedCaseId).then((caseData) => {
-      if (!cancelled) setTechnicalCase(caseData);
-    });
+    void api
+      .getCase(resolvedCaseId)
+      .then((caseData) => {
+        if (!cancelled) setTechnicalCase(caseData);
+      })
+      .catch(() => undefined);
     return () => {
       cancelled = true;
     };

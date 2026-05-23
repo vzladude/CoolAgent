@@ -72,7 +72,7 @@ export function SettingsScreen({
         />
         <ListRow
           title="Token"
-          subtitle={session.isLocal ? 'Sin token bearer' : 'Guardado en SecureStore'}
+          subtitle={session.isLocal ? 'Casos y chat usan datos mock' : 'Guardado en SecureStore para chat y usage'}
           icon={ShieldAlert}
           right={<Badge tone={session.isLocal ? 'warning' : 'success'}>{session.isLocal ? 'local' : 'seguro'}</Badge>}
         />

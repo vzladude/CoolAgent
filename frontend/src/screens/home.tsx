@@ -26,11 +26,14 @@ export function HomeScreen({ nav, session }: { nav: NavigationApi; session: Auth
 
   useEffect(() => {
     let cancelled = false;
-    void api.listCases().then((cases) => {
-      if (!cancelled && cases.length > 0) {
-        setLatestCase(cases[0]);
-      }
-    });
+    void api
+      .listCases()
+      .then((cases) => {
+        if (!cancelled && cases.length > 0) {
+          setLatestCase(cases[0]);
+        }
+      })
+      .catch(() => undefined);
     return () => {
       cancelled = true;
     };

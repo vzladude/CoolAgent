@@ -142,11 +142,22 @@ function renderRoute(route: AppRoute, nav: NavigationApi, session: AuthSession, 
 export default function App() {
   const [stack, setStack] = useState<AppRoute[]>([{ name: 'home' }]);
   const [session, setSession] = useState<AuthSession | null>(null);
+  const [authNotice, setAuthNotice] = useState<string | null>(null);
   const [sessionLoading, setSessionLoading] = useState(true);
   const currentRoute = stack[stack.length - 1];
 
   useEffect(() => {
     let cancelled = false;
+    api.setUnauthorizedHandler(async () => {
+      api.setAuthToken(null);
+      api.setLocalMode(false);
+      await clearStoredToken();
+      if (!cancelled) {
+        setAuthNotice('Tu sesion expiro. Entra de nuevo para sincronizar casos.');
+        setSession(null);
+        setStack([{ name: 'home' }]);
+      }
+    });
 
     const restoreSession = async () => {
       const token = await loadStoredToken();
@@ -156,9 +167,11 @@ export default function App() {
       }
 
       api.setAuthToken(token);
+      api.setLocalMode(false);
       try {
         const user = await api.getCurrentUser();
         if (!cancelled) {
+          setAuthNotice(null);
           setSession({
             accessToken: token,
             tokenType: 'bearer',
@@ -167,6 +180,7 @@ export default function App() {
         }
       } catch {
         api.setAuthToken(null);
+        api.setLocalMode(false);
         await clearStoredToken();
       } finally {
         if (!cancelled) setSessionLoading(false);
@@ -176,6 +190,7 @@ export default function App() {
     void restoreSession();
     return () => {
       cancelled = true;
+      api.setUnauthorizedHandler(undefined);
     };
   }, []);
 
@@ -194,9 +209,11 @@ export default function App() {
       login: async (credentials: AuthCredentials) => {
         const nextSession = await api.login(credentials);
         api.setAuthToken(nextSession.accessToken);
+        api.setLocalMode(false);
         if (nextSession.accessToken) {
           await saveStoredToken(nextSession.accessToken);
         }
+        setAuthNotice(null);
         setSession(nextSession);
         setStack([{ name: 'home' }]);
       },
@@ -207,20 +224,26 @@ export default function App() {
           password: input.password,
         });
         api.setAuthToken(nextSession.accessToken);
+        api.setLocalMode(false);
         if (nextSession.accessToken) {
           await saveStoredToken(nextSession.accessToken);
         }
+        setAuthNotice(null);
         setSession(nextSession);
         setStack([{ name: 'home' }]);
       },
       continueLocal: () => {
         api.setAuthToken(null);
+        api.setLocalMode(true);
+        setAuthNotice(null);
         setSession(localSession());
         setStack([{ name: 'home' }]);
       },
       logout: async () => {
         api.setAuthToken(null);
+        api.setLocalMode(false);
         await clearStoredToken();
+        setAuthNotice(null);
         setSession(null);
         setStack([{ name: 'home' }]);
       },
@@ -240,7 +263,7 @@ export default function App() {
             <BottomTabs nav={nav} />
           </>
         ) : (
-          <AuthScreen auth={auth} />
+          <AuthScreen auth={auth} notice={authNotice} />
         )}
       </View>
     </SafeAreaProvider>

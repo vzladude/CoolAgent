@@ -17,7 +17,7 @@ import type { AuthActions } from '../types';
 
 type AuthMode = 'login' | 'register';
 
-export function AuthScreen({ auth }: { auth: AuthActions }) {
+export function AuthScreen({ auth, notice }: { auth: AuthActions; notice?: string | null }) {
   const [mode, setMode] = useState<AuthMode>('login');
   const [email, setEmail] = useState('');
   const [fullName, setFullName] = useState('');
@@ -56,6 +56,18 @@ export function AuthScreen({ auth }: { auth: AuthActions }) {
 
       <Panel accent>
         <View style={{ gap: 14 }}>
+          {notice ? (
+            <View
+              style={{
+                backgroundColor: theme.color.warningSoft,
+                borderRadius: theme.radius.md,
+                padding: 10,
+              }}
+            >
+              <Text style={{ color: theme.color.warning, fontSize: 13, lineHeight: 18 }}>{notice}</Text>
+            </View>
+          ) : null}
+
           <View style={{ flexDirection: 'row', gap: 8 }}>
             {(['login', 'register'] as const).map((item) => (
               <Pressable
@@ -151,7 +163,7 @@ export function AuthScreen({ auth }: { auth: AuthActions }) {
       <Panel>
         <View style={{ gap: 12 }}>
           <BodyText muted>
-            Usa el backend local para una sesion real o entra sin token para seguir probando el MVP.
+            Usa el backend local para una sesion real. El modo local usa datos mock y no sincroniza casos.
           </BodyText>
           <PrimaryButton
             icon={Wrench}
